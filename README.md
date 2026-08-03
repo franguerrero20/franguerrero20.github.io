@@ -94,6 +94,13 @@ h1.title span{color:var(--ember);}
   z-index:2;
 }
 .hero-cta:active{background:var(--bg-elev-2);}
+.hero-ctas{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  position:relative;
+  z-index:2;
+}
 
 /* DAY RAIL */
 .rail-wrap{
@@ -513,6 +520,22 @@ h1.title span{color:var(--ember);}
   color:var(--text-faint);
   padding:14px 0 4px;
 }
+.notes-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.notes-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:11px 12px;
+  text-decoration:none;
+  color:var(--text);
+}
+.notes-row:active{border-color:var(--text-faint);}
+.notes-icon{font-size:18px; flex:0 0 auto;}
+.notes-title{flex:1; min-width:0; font-size:13.5px; font-weight:600;}
+.notes-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px;}
 </style>
 </head>
 <body>
@@ -520,7 +543,10 @@ h1.title span{color:var(--ember);}
 <div class="hero">
   <p class="eyebrow">7 – 16 de agosto</p>
   <h1 class="title">Puc<span>ó</span>n 2026</h1>
-  <button class="hero-cta" onclick="openGeneralInfo()">🎒 Esenciales del viaje</button>
+  <div class="hero-ctas">
+    <button class="hero-cta" onclick="openGeneralInfo()">🎒 Esenciales del viaje</button>
+    <button class="hero-cta" onclick="openNotesInfo()">📎 Notas y documentos</button>
+  </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
       fill="none" stroke="#2a3b3d" stroke-width="2"/>
@@ -753,6 +779,15 @@ const GENERAL = {
   ]
 };
 
+// Agregar acá nuevas notas/documentos del viaje: {icon, title, url} para links, {icon, title, phone} para teléfonos.
+const NOTES = [
+  {icon:"🎫", title:"Drive pasajes", url:"https://drive.google.com/drive/folders/1QD5QM0mE8MG6ajhYZZkGjUYXZobx6fDc?usp=sharing"},
+  {icon:"📊", title:"Excel con datos", url:"https://docs.google.com/spreadsheets/d/1YAEMTC7cLQMOfmJaqUcvubC7MVc2A8_gD5AJjxEp-Eo/edit?usp=sharing"},
+  {icon:"🌶️", title:"Casa Santiago", url:"https://www.booking.com/hotel/cl/providencia-suites-santiago.es.html?aid=383259&label=santiago%2Fprovidencia-ydjRImlBHxLCGOIqNdDJ1gSM553196594526%3Apl%3Ata%3Ap1%3Ap2%3Aac%3Aap%3Aneg%3Afi%3Atikwd-494200121432%3Alp9069680%3Ali%3Adem%3Adm%3Appccp%3DUmFuZG9tSVYkc2RlIyh9YRlijhKLEMjJLyONwTyX95c&sid=ffb55aeced5956569622ba43e0c92f50&all_sr_blocks=1670187703_438813171_7_0_0&checkin=2026-08-07&checkout=2026-08-09&dest_id=1990&dest_type=district&dist=0&group_adults=7&group_children=0&hapos=1&highlighted_blocks=1670187703_438813171_7_0_0&hpos=1&matching_block_id=1670187703_438813171_7_0_0&no_rooms=1&req_adults=7&req_children=0&room1=A%2CA%2CA%2CA%2CA%2CA%2CA&sb_price_type=total&sr_order=popularity&sr_pri_blocks=1670187703_438813171_7_0_0__20710&srepoch=1782008951&srpvid=cbb7117570d8037f&type=total&ucfs=1&"},
+  {icon:"🏔️", title:"Casa Pucón", url:"https://es-l.airbnb.com/rooms/1296985412382637978?unique_share_id=dba1287a-fce8-4734-bac2-da612cbcfd82&viralityEntryPoint=1&s=76"},
+  {icon:"🚑", title:"Seguro Chile", phone:"188800200668"}
+];
+
 function mapsUrl(q){
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
 }
@@ -850,7 +885,7 @@ function showDay(i){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub){
+function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, links){
   let html = `
     <div class="sheet-handle"></div>
     <div class="sheet-head">
@@ -869,6 +904,7 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub){
   const hasOutfit = outfit && outfit.length;
   const hasPack = pack && pack.length;
   const hasSub = sub && sub.length;
+  const hasLinks = links && links.length;
 
   if(hasTips){
     html += `<div class="sheet-section">
@@ -894,7 +930,20 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub){
       <ul class="place-list">${sub.map(s=>`<li>${s.name}${s.maps?`<a class="place-pin" href="${mapsUrl(s.maps)}" target="_blank" rel="noopener">Ver en Maps</a>`:''}</li>`).join('')}</ul>
     </div>`;
   }
-  if(!hasTips && !hasOutfit && !hasPack && !hasSub && !maps){
+  if(hasLinks){
+    html += `<div class="sheet-section">
+      <ul class="notes-list">${links.map(n=>{
+        const href = n.url ? n.url : (n.phone ? 'tel:'+n.phone : '#');
+        const extAttrs = n.url ? ' target="_blank" rel="noopener"' : '';
+        return `<li><a class="notes-row" href="${href}"${extAttrs}>
+          <span class="notes-icon">${n.icon||'📎'}</span>
+          <span class="notes-title">${n.title}</span>
+          <span class="notes-arrow">${n.phone?'📞':'↗'}</span>
+        </a></li>`;
+      }).join('')}</ul>
+    </div>`;
+  }
+  if(!hasTips && !hasOutfit && !hasPack && !hasSub && !hasLinks && !maps){
     html += `<p class="no-info">Sin notas adicionales para esta actividad.</p>`;
   }
 
@@ -914,6 +963,10 @@ function openGroupDetail(dayIdx, itemIdx, boxIdx){
 
 function openGeneralInfo(){
   renderSheet("🎒", "Esenciales del viaje", null, null, GENERAL.tips, GENERAL.outfit, GENERAL.pack, null, null);
+}
+
+function openNotesInfo(){
+  renderSheet("📎", "Notas y documentos", null, null, null, null, null, null, null, NOTES);
 }
 
 function closeDetail(){
