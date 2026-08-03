@@ -556,9 +556,27 @@ h1.title span{color:var(--ember);}
 .notes-icon{font-size:18px; flex:0 0 auto;}
 .notes-title{flex:1; min-width:0; font-size:13.5px; font-weight:600;}
 .notes-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px;}
+.reload-btn{
+  position:fixed;
+  top:calc(10px + env(safe-area-inset-top));
+  right:calc(10px + env(safe-area-inset-right));
+  z-index:30;
+  width:34px; height:34px;
+  border-radius:50%;
+  background:rgba(24,34,37,0.85);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.reload-btn:active{background:var(--bg-elev-2); transform:scale(0.94);}
 </style>
 </head>
 <body>
+
+<button class="reload-btn" onclick="hardReload()" aria-label="Recargar sin caché">↻</button>
 
 <div class="hero">
   <p class="eyebrow">7 – 16 de agosto</p>
@@ -822,6 +840,10 @@ const INSTALL_STEPS = [
 
 function mapsUrl(q){
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+}
+
+function hardReload(){
+  location.href = location.pathname + '?_r=' + Date.now();
 }
 
 const rail = document.getElementById('rail');
