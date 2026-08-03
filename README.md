@@ -762,16 +762,21 @@ const panels = document.getElementById('panels');
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
 
+const TRIP_YEAR = 2026, TRIP_MONTH = 7; // agosto (0-indexed)
+const today = new Date();
+const todayIdx = DAYS.findIndex(d => today.getFullYear()===TRIP_YEAR && today.getMonth()===TRIP_MONTH && today.getDate()===d.num);
+const initialDayIndex = todayIdx !== -1 ? todayIdx : 0;
+
 DAYS.forEach((d,i)=>{
   const pill = document.createElement('div');
-  pill.className = 'day-pill' + (i===0?' active':'');
+  pill.className = 'day-pill' + (i===initialDayIndex?' active':'');
   pill.id = 'pill-'+i;
   pill.innerHTML = `<div class="num">${d.num}</div><div class="dow">${d.dow.slice(0,3)}</div><div class="dot"></div>`;
   pill.onclick = ()=>showDay(i);
   rail.appendChild(pill);
 
   const panel = document.createElement('div');
-  panel.className = 'day-panel' + (i===0?' active':'');
+  panel.className = 'day-panel' + (i===initialDayIndex?' active':'');
   panel.id = 'panel-'+i;
 
   let itemsHtml = '';
@@ -825,6 +830,8 @@ DAYS.forEach((d,i)=>{
   `;
   panels.appendChild(panel);
 });
+
+document.getElementById('pill-'+initialDayIndex).scrollIntoView({inline:'center', block:'nearest'});
 
 // Only open the detail sheet if the click didn't land on a link (maps buttons/pins),
 // so the map buttons keep the browser's native anchor behavior intact.
