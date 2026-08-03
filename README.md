@@ -485,6 +485,26 @@ h1.title span{color:var(--ember);}
   color:var(--glacial);
   font-weight:700;
 }
+.steps-list{list-style:none; counter-reset:step; margin:0; padding:0;}
+.steps-list li{
+  font-size:13.5px;
+  color:var(--text);
+  line-height:1.45;
+  padding:5px 0 15px 30px;
+  position:relative;
+  counter-increment:step;
+}
+.steps-list li::before{
+  content:counter(step);
+  position:absolute; left:0; top:3px;
+  width:20px; height:20px;
+  border-radius:50%;
+  background:var(--glacial-soft);
+  color:var(--glacial);
+  font-size:11px;
+  font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
 .pack-list{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:7px;}
 .pack-list li{
   font-size:12.5px;
@@ -546,6 +566,7 @@ h1.title span{color:var(--ember);}
   <div class="hero-ctas">
     <button class="hero-cta" onclick="openGeneralInfo()">🎒 Esenciales del viaje</button>
     <button class="hero-cta" onclick="openNotesInfo()">📎 Notas y documentos</button>
+    <button class="hero-cta" onclick="openInstallInfo()">📲 Cómo instalar</button>
   </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
@@ -788,6 +809,13 @@ const NOTES = [
   {icon:"🚑", title:"Seguro Chile", phone:"188800200668"}
 ];
 
+const INSTALL_STEPS = [
+  "Si el link se abrió en otro navegador (Chrome, etc.), tocá el ícono de compartir o los tres puntos y elegí “Abrir en Safari”.",
+  "En Safari, tocá el ícono de Compartir (el cuadrado con la flecha hacia arriba) en la barra de abajo.",
+  "Deslizá el menú hacia abajo y elegí “Agregar a Pantalla de Inicio”.",
+  "Confirmá el nombre y tocá “Agregar”, arriba a la derecha."
+];
+
 function mapsUrl(q){
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
 }
@@ -885,7 +913,7 @@ function showDay(i){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, links){
+function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, links, steps){
   let html = `
     <div class="sheet-handle"></div>
     <div class="sheet-head">
@@ -905,7 +933,13 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
   const hasPack = pack && pack.length;
   const hasSub = sub && sub.length;
   const hasLinks = links && links.length;
+  const hasSteps = steps && steps.length;
 
+  if(hasSteps){
+    html += `<div class="sheet-section">
+      <ol class="steps-list">${steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+    </div>`;
+  }
   if(hasTips){
     html += `<div class="sheet-section">
       <p class="sheet-section-title warn">Tener en cuenta</p>
@@ -943,7 +977,7 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
       }).join('')}</ul>
     </div>`;
   }
-  if(!hasTips && !hasOutfit && !hasPack && !hasSub && !hasLinks && !maps){
+  if(!hasTips && !hasOutfit && !hasPack && !hasSub && !hasLinks && !hasSteps && !maps){
     html += `<p class="no-info">Sin notas adicionales para esta actividad.</p>`;
   }
 
@@ -967,6 +1001,10 @@ function openGeneralInfo(){
 
 function openNotesInfo(){
   renderSheet("📎", "Notas y documentos", null, null, null, null, null, null, null, NOTES);
+}
+
+function openInstallInfo(){
+  renderSheet("📲", "Cómo instalar en el iPhone", null, null, null, null, null, null, null, null, INSTALL_STEPS);
 }
 
 function closeDetail(){
