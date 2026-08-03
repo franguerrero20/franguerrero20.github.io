@@ -689,9 +689,13 @@ const DAYS = [
         tips:["Se hace con agencia autorizada por CONAF, con guía obligatorio — reservar con anticipación.","Es una exigencia física alta (jornada larga, terreno de nieve/ceniza en pendiente).","El clima arriba puede cambiar rápido, aunque abajo esté despejado.","La agencia suele proveer crampones, piolet y casco — confirmar qué incluye la reserva.","Ir con buen descanso la noche anterior."],
         outfit:["Ropa técnica en capas (térmica + abrigo + cortaviento)","Guantes y gorro","Gafas de sol/nieve","Botas de trekking (o las que provea la agencia)"],
         pack:["Protector solar alto (la nieve refleja mucho)","Mochila pequeña con agua y comida energética"]},
-      {icon:"🍺", title:"Nochecita: cervecería",
-        maps:"Cervecería artesanal, Pucón, Chile",
-        tips:["Después del volcán, buena opción cerca de la casa para no trasladarse mucho."]}
+      {icon:"🍺", title:"Nochecita: cervecería", note:"Opciones para salir con los muchachos",
+        sub:[
+          {name:"BierGarten Pucón", maps:"BierGarten Pucón, Chile"},
+          {name:"Sour", maps:"Sour bar, Pucón, Chile"},
+          {name:"Club 77", maps:"Club 77, Pucón, Chile"}
+        ],
+        tips:["Después del volcán, buena opción cerca de la casa para no trasladarse mucho.","BierGarten: cervecería artesanal top con comida alemana, la más pedida de Pucón.","Sour: coctelería, buena onda para arrancar la noche.","Club 77: bar con buena música y picadas, ambiente relajado."]}
     ]
   },
   {
