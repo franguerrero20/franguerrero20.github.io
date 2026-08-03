@@ -78,14 +78,22 @@ h1.title{
   color:var(--text);
 }
 h1.title span{color:var(--ember);}
-.hero-sub{
-  font-size:13.5px;
-  color:var(--text-dim);
-  margin:0;
-  max-width:520px;
+.hero-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text);
+  background:var(--bg-elev);
+  border:1px solid var(--line);
+  padding:7px 12px;
+  border-radius:20px;
+  cursor:pointer;
   position:relative;
   z-index:2;
 }
+.hero-cta:active{background:var(--bg-elev-2);}
 
 /* DAY RAIL */
 .rail-wrap{
@@ -512,7 +520,7 @@ h1.title span{color:var(--ember);}
 <div class="hero">
   <p class="eyebrow">7 – 16 de agosto</p>
   <h1 class="title">Puc<span>ó</span>n 2026</h1>
-  <p class="hero-sub">Montevideo → Santiago → Pucón y vuelta. Volcán, lagos, termas y rutas por la Araucanía. Tocá cualquier actividad para ver tips, indumentaria, qué llevar y su ubicación.</p>
+  <button class="hero-cta" onclick="openGeneralInfo()">🎒 Esenciales del viaje</button>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
       fill="none" stroke="#2a3b3d" stroke-width="2"/>
@@ -653,7 +661,7 @@ const DAYS = [
         sub:[
           {name:"Laguna Verde", maps:"Laguna Verde, Parque Nacional Huerquehue, Chile"},
           {name:"Laguna Toro", maps:"Laguna Toro, Parque Nacional Huerquehue, Chile"},
-          {name:"Laguna Chico", maps:"Laguna Chica, Parque Nacional Huerquehue, Chile"},
+          {name:"Laguna Chica", maps:"Laguna Chica, Parque Nacional Huerquehue, Chile"},
           {name:"Miradores"}
         ],
         tips:["Es una caminata larga (varias horas, terreno con subidas) — calcular tiempo para volver antes de que oscurezca.","Llevar comida y agua, no hay dónde comprar en el sendero."],
@@ -724,6 +732,26 @@ const DAYS = [
     ]
   }
 ];
+
+const GENERAL = {
+  tips:[
+    "Cédula/pasaporte vigente para cruzar la frontera y hacer el check-in de los vuelos.",
+    "Efectivo en pesos chilenos: útil para peajes, entradas a parques nacionales (CONAF) y lugares sin POS.",
+    "Licencia de conducir y reserva del auto a mano (impresa o en el celular).",
+    "Descargar direcciones y mapas offline por si hay tramos de ruta sin señal."
+  ],
+  outfit:[
+    "Ropa en capas: hay tramos de calor (Santiago) y de frío intenso (volcán, termas de noche).",
+    "Calzado de trekking + algo cómodo para ciudad.",
+    "Traje de baño (termas, playa del lago)."
+  ],
+  pack:[
+    "Cargadores y power bank",
+    "Protector solar (la nieve y la altura reflejan mucho)",
+    "Medicamentos personales / botiquín básico",
+    "Toalla y muda de ropa seca"
+  ]
+};
 
 function mapsUrl(q){
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
@@ -875,6 +903,10 @@ function openDetail(dayIdx, itemIdx){
 function openGroupDetail(dayIdx, itemIdx, boxIdx){
   const b = DAYS[dayIdx].items[itemIdx].boxes[boxIdx];
   renderSheet(b.icon, `${b.label}: ${b.title}`, null, null, b.tips, b.outfit, b.pack, b.maps, null);
+}
+
+function openGeneralInfo(){
+  renderSheet("🎒", "Esenciales del viaje", null, null, GENERAL.tips, GENERAL.outfit, GENERAL.pack, null, null);
 }
 
 function closeDetail(){
