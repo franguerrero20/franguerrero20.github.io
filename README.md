@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Pucón · Itinerario</title>
+<title>Pucón 2026</title>
 
 <!-- iOS: abrir en modo standalone (sin barra de Safari) al agregar a pantalla de inicio -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pucón">
+<meta name="apple-mobile-web-app-title" content="Pucón 2026">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <!-- Android/Chrome equivalent -->
