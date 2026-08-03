@@ -2,8 +2,18 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Pucón · Itinerario</title>
+
+<!-- iOS: abrir en modo standalone (sin barra de Safari) al agregar a pantalla de inicio -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pucón">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<!-- Android/Chrome equivalent -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1618">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -30,13 +40,13 @@ body{
   color:var(--text);
   font-family:'Inter',sans-serif;
   min-height:100vh;
-  padding-bottom:40px;
+  padding-bottom:calc(40px + env(safe-area-inset-bottom));
 }
 
 /* HERO */
 .hero{
   position:relative;
-  padding:28px 20px 22px;
+  padding:calc(28px + env(safe-area-inset-top)) 20px 22px;
   overflow:hidden;
   border-bottom:1px solid var(--line);
   background:
@@ -80,6 +90,7 @@ h1.title span{color:var(--ember);}
 /* DAY RAIL */
 .rail-wrap{
   position:sticky; top:0; z-index:20;
+  padding-top:env(safe-area-inset-top);
   background:rgba(15,22,24,0.94);
   backdrop-filter:blur(8px);
   border-bottom:1px solid var(--line);
@@ -368,7 +379,7 @@ h1.title span{color:var(--ember);}
   border:1px solid var(--line);
   border-bottom:none;
   border-radius:20px 20px 0 0;
-  padding:10px 20px 28px;
+  padding:10px 20px calc(28px + env(safe-area-inset-bottom));
   animation:slideUp .22s ease;
 }
 @media (min-width:520px){
