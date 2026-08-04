@@ -556,6 +556,24 @@ h1.title span{color:var(--ember);}
 .notes-icon{font-size:18px; flex:0 0 auto;}
 .notes-title{flex:1; min-width:0; font-size:13.5px; font-weight:600;}
 .notes-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px;}
+.apps-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.apps-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:11px 12px;
+  text-decoration:none;
+  color:var(--text);
+}
+.apps-row:active{border-color:var(--text-faint);}
+.apps-icon{font-size:20px; flex:0 0 auto; margin-top:1px;}
+.apps-body{flex:1; min-width:0;}
+.apps-title{font-size:13.5px; font-weight:600; margin:0 0 2px;}
+.apps-desc{font-size:12px; color:var(--text-dim); line-height:1.4; margin:0;}
+.apps-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px; margin-top:2px;}
 .reload-btn{
   position:fixed;
   top:calc(10px + env(safe-area-inset-top));
@@ -585,6 +603,7 @@ h1.title span{color:var(--ember);}
     <button class="hero-cta" onclick="openGeneralInfo()">🎒 Esenciales del viaje</button>
     <button class="hero-cta" onclick="openNotesInfo()">📎 Notas y documentos</button>
     <button class="hero-cta" onclick="openInstallInfo()">📲 Cómo instalar</button>
+    <button class="hero-cta" onclick="openAppsInfo()">📱 Apps útiles</button>
   </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
@@ -838,6 +857,13 @@ const INSTALL_STEPS = [
   "Confirmá el nombre y tocá “Agregar”, arriba a la derecha."
 ];
 
+// Agregar acá nuevas apps recomendadas: {icon, title, desc, url (link de App Store)}.
+const APPS = [
+  {icon:"🛣️", title:"Pase.cl", desc:"La mayoría de las autopistas chilenas son free flow (sin barrera). Preguntale a la rental si el auto ya trae TAG; si no, con esta app revisás y pagás los pórticos para no terminar con una multa.", url:"https://apps.apple.com/cl/app/tu-tag-pase/id605497480"},
+  {icon:"🥾", title:"AllTrails", desc:"Para Huerquehue y el sendero Los Lagos: mapas de senderos descargables offline, tiempos estimados y reseñas recientes.", url:"https://apps.apple.com/app/alltrails-hike-bike-run/id405075943"},
+  {icon:"💨", title:"Windy", desc:"Pronóstico de viento/nieve mucho más preciso que el clima genérico, clave para el día del volcán.", url:"https://apps.apple.com/app/windy-com/id1161387262"}
+];
+
 function mapsUrl(q){
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
 }
@@ -939,7 +965,7 @@ function showDay(i){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, links, steps){
+function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, links, steps, apps){
   let html = `
     <div class="sheet-handle"></div>
     <div class="sheet-head">
@@ -960,6 +986,7 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
   const hasSub = sub && sub.length;
   const hasLinks = links && links.length;
   const hasSteps = steps && steps.length;
+  const hasApps = apps && apps.length;
 
   if(hasSteps){
     html += `<div class="sheet-section">
@@ -1003,7 +1030,16 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
       }).join('')}</ul>
     </div>`;
   }
-  if(!hasTips && !hasOutfit && !hasPack && !hasSub && !hasLinks && !hasSteps && !maps){
+  if(hasApps){
+    html += `<div class="sheet-section">
+      <ul class="apps-list">${apps.map(a=>`<li><a class="apps-row" href="${a.url}" target="_blank" rel="noopener">
+        <span class="apps-icon">${a.icon||'📱'}</span>
+        <div class="apps-body"><p class="apps-title">${a.title}</p><p class="apps-desc">${a.desc}</p></div>
+        <span class="apps-arrow">↗</span>
+      </a></li>`).join('')}</ul>
+    </div>`;
+  }
+  if(!hasTips && !hasOutfit && !hasPack && !hasSub && !hasLinks && !hasSteps && !hasApps && !maps){
     html += `<p class="no-info">Sin notas adicionales para esta actividad.</p>`;
   }
 
@@ -1031,6 +1067,10 @@ function openNotesInfo(){
 
 function openInstallInfo(){
   renderSheet("📲", "Cómo instalar en el iPhone", null, null, null, null, null, null, null, null, INSTALL_STEPS);
+}
+
+function openAppsInfo(){
+  renderSheet("📱", "Apps útiles", null, null, null, null, null, null, null, null, null, APPS);
 }
 
 function closeDetail(){
