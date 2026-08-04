@@ -745,6 +745,12 @@ const DAYS = [
   {
     dow:"Miércoles", num:12, loc:"Pucón", tag:"Pucón",
     items:[
+      {icon:"🚗", title:"Salida de la casa", meta:"07:00 hs",
+        tips:["Dejar la mochila del día armada la noche anterior para no atrasar la salida."]},
+      {icon:"🌲", title:"Parque Nacional Huerquehue", note:"Abre 8:30 hs — ir temprano",
+        maps:"Parque Nacional Huerquehue, Chile",
+        tips:["Entrada paga en el acceso (CONAF) — llevar efectivo.","Estacionamiento limitado, por eso conviene llegar apenas abre."],
+        pack:["Efectivo para la entrada"]},
       {icon:"🧖", title:"Termas (a definir)", note:"Entre Termas San Luis o Termas Quimey-co",
         sub:[
           {name:"Termas San Luis — 4 piscinas (una semitechada), horario más extendido (11:00-21:00 hs, todos los días)", maps:"Termas de San Luis, Pucón, Chile"},
@@ -776,18 +782,7 @@ const DAYS = [
           tips:["Entrada paga en el acceso al parque (CONAF) — llevar efectivo.","Estacionamiento limitado y el parque abre 8:30 hs — conviene llegar apenas abre.","Es una caminata larga (varias horas, terreno con subidas) — calcular tiempo para volver antes de que oscurezca.","Llevar comida y agua, no hay dónde comprar en el sendero."],
           outfit:["Calzado de trekking","Campera cortaviento (cambia el clima en el bosque/altura)","Gorro"],
           pack:["Efectivo para la entrada","Agua y snacks para todo el día","Protector solar"]}
-      ]},
-      {icon:"🧖", title:"Salida a Termas Botánicas", meta:"14:00 hs",
-        maps:"Termas Botánicas de Pucón, Chile",
-        note:"Decisión tomada, pero esa semana hay descuentos en varias termas — alternativas más abajo por si conviene cambiar.",
-        sub:[
-          {name:"Termas Los Pozones — desde $15.000 (la más barata, pozones naturales al aire libre junto al río)", maps:"Termas Los Pozones, Pucón, Chile"},
-          {name:"Termas Peumayén — desde $20.000 (más agreste y tranquila)", maps:"Termas Peumayén, Pucón, Chile"},
-          {name:"Termas Menetué — desde $25.000 (precio similar a Botánicas)", maps:"Termas Menetué, Pucón, Chile"}
-        ],
-        tips:["Conviene reservar entrada con anticipación, sobre todo en temporada alta.","Buen cierre de día después de la actividad de la mañana.","Los precios pueden variar por los descuentos de temporada — conviene comparar antes de confirmar."],
-        outfit:["Traje de baño","Ojotas o sandalias"],
-        pack:["Toalla","Muda de ropa seca"]}
+      ]}
     ]
   },
   {
