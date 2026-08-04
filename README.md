@@ -745,23 +745,14 @@ const DAYS = [
   {
     dow:"Miércoles", num:12, loc:"Pucón", tag:"Pucón",
     items:[
-      {icon:"🚗", title:"Salida de la casa", meta:"07:00 hs",
-        tips:["Dejar la mochila del día armada la noche anterior para no atrasar la salida."]},
-      {icon:"🌲", title:"Parque Nacional Huerquehue", note:"Abre 8:30 hs — ir temprano",
-        maps:"Parque Nacional Huerquehue, Chile",
-        tips:["Entrada paga en el acceso (CONAF) — llevar efectivo.","Estacionamiento limitado, por eso conviene llegar apenas abre."],
-        pack:["Efectivo para la entrada"]},
-      {icon:"🥾", title:"Sendero Los Lagos", ember:true,
-        maps:"Sendero Los Lagos, Parque Nacional Huerquehue, Chile",
+      {icon:"🧖", title:"Termas (a definir)", note:"Entre Termas San Luis o Termas Quimey-co",
         sub:[
-          {name:"Laguna Verde", maps:"Laguna Verde, Parque Nacional Huerquehue, Chile"},
-          {name:"Laguna Toro", maps:"Laguna Toro, Parque Nacional Huerquehue, Chile"},
-          {name:"Laguna Chica", maps:"Laguna Chica, Parque Nacional Huerquehue, Chile"},
-          {name:"Miradores"}
+          {name:"Termas San Luis — 4 piscinas (una semitechada), horario más extendido (11:00-21:00 hs, todos los días)", maps:"Termas de San Luis, Pucón, Chile"},
+          {name:"Termas Quimey-co — a orillas del río Liucura, $35.000 adulto, horario 10:30-19:30 hs (cierra los domingos)", maps:"Termas Quimey-co, Pucón, Chile"}
         ],
-        tips:["Es una caminata larga (varias horas, terreno con subidas) — calcular tiempo para volver antes de que oscurezca.","Llevar comida y agua, no hay dónde comprar en el sendero."],
-        outfit:["Calzado de trekking","Campera cortaviento (cambia el clima en el bosque/altura)","Gorro"],
-        pack:["Agua y snacks para todo el día","Protector solar"]}
+        tips:["Ambas tienen agua entre 38°C y 40°C.","San Luis tiene más piscinas y horario más largo; Quimey-co tiene más onda de río/naturaleza.","Conviene definir y reservar con un par de días de anticipación."],
+        outfit:["Traje de baño","Ojotas o sandalias"],
+        pack:["Toalla","Muda de ropa seca"]}
     ]
   },
   {
@@ -774,11 +765,17 @@ const DAYS = [
           tips:["2 horas de clases + 2-3 horas libres.","Confirmar que el centro de ski esté operando (depende de nieve/temporada).","Si no tienen equipo propio, se puede alquilar en el centro o en Pucón."],
           outfit:["Ropa térmica e impermeable","Guantes, gorro y gafas de sol/nieve"],
           pack:["Protector solar alto"]},
-        {label:"Grupo 2", icon:"🏔️", title:"Lagunas andinas y La China",
-          maps:"Lagunas Andinas, Pucón, Chile",
-          tips:["Caminata de altura — llevar capas porque cambia la temperatura."],
-          outfit:["Calzado de trekking","Campera de abrigo"],
-          pack:["Agua y snacks"]}
+        {label:"Grupo 2", icon:"🥾", title:"Sendero Los Lagos",
+          maps:"Sendero Los Lagos, Parque Nacional Huerquehue, Chile",
+          sub:[
+            {name:"Laguna Verde", maps:"Laguna Verde, Parque Nacional Huerquehue, Chile"},
+            {name:"Laguna Toro", maps:"Laguna Toro, Parque Nacional Huerquehue, Chile"},
+            {name:"Laguna Chica", maps:"Laguna Chica, Parque Nacional Huerquehue, Chile"},
+            {name:"Miradores"}
+          ],
+          tips:["Entrada paga en el acceso al parque (CONAF) — llevar efectivo.","Estacionamiento limitado y el parque abre 8:30 hs — conviene llegar apenas abre.","Es una caminata larga (varias horas, terreno con subidas) — calcular tiempo para volver antes de que oscurezca.","Llevar comida y agua, no hay dónde comprar en el sendero."],
+          outfit:["Calzado de trekking","Campera cortaviento (cambia el clima en el bosque/altura)","Gorro"],
+          pack:["Efectivo para la entrada","Agua y snacks para todo el día","Protector solar"]}
       ]},
       {icon:"🧖", title:"Salida a Termas Botánicas", meta:"14:00 hs",
         maps:"Termas Botánicas de Pucón, Chile",
@@ -1075,7 +1072,7 @@ function openDetail(dayIdx, itemIdx){
 
 function openGroupDetail(dayIdx, itemIdx, boxIdx){
   const b = DAYS[dayIdx].items[itemIdx].boxes[boxIdx];
-  renderSheet(b.icon, `${b.label}: ${b.title}`, b.meta, b.note, b.tips, b.outfit, b.pack, b.maps, null);
+  renderSheet(b.icon, `${b.label}: ${b.title}`, b.meta, b.note, b.tips, b.outfit, b.pack, b.maps, b.sub);
 }
 
 function openGeneralInfo(){
