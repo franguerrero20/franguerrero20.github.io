@@ -777,7 +777,13 @@ const DAYS = [
       ]},
       {icon:"🧖", title:"Salida a Termas Botánicas", meta:"14:00 hs",
         maps:"Termas Botánicas de Pucón, Chile",
-        tips:["Conviene reservar entrada con anticipación, sobre todo en temporada alta.","Buen cierre de día después de la actividad de la mañana."],
+        note:"Decisión tomada, pero esa semana hay descuentos en varias termas — alternativas más abajo por si conviene cambiar.",
+        sub:[
+          {name:"Termas Los Pozones — desde $15.000 (la más barata, pozones naturales al aire libre junto al río)", maps:"Termas Los Pozones, Pucón, Chile"},
+          {name:"Termas Peumayén — desde $20.000 (más agreste y tranquila)", maps:"Termas Peumayén, Pucón, Chile"},
+          {name:"Termas Menetué — desde $25.000 (precio similar a Botánicas)", maps:"Termas Menetué, Pucón, Chile"}
+        ],
+        tips:["Conviene reservar entrada con anticipación, sobre todo en temporada alta.","Buen cierre de día después de la actividad de la mañana.","Los precios pueden variar por los descuentos de temporada — conviene comparar antes de confirmar."],
         outfit:["Traje de baño","Ojotas o sandalias"],
         pack:["Toalla","Muda de ropa seca"]}
     ]
@@ -798,7 +804,12 @@ const DAYS = [
         maps:"Rafting Río Trancura, Pucón, Chile",
         tips:["La agencia suele dar traje de neopreno, casco y chaleco — confirmar qué incluye.","Dejar objetos de valor (celular, billetera) guardados, no llevarlos sueltos en la balsa.","Van a mojarse por completo, aunque no se caigan del bote."],
         outfit:["Ropa que se pueda mojar por debajo del neopreno","Calzado que se pueda mojar (no ojotas sueltas)"],
-        pack:["Muda seca y toalla para después"]}
+        pack:["Muda seca y toalla para después"]},
+      {icon:"🌲", title:"Canopy (posible)", note:"Actividad a evaluar, no confirmada — a coordinar con el resto del día",
+        maps:"Canopy Pucón, Chile",
+        tips:["Circuito de tirolesas sobre el río Trancura: cruces del río y estaciones entre los árboles.","Dura aprox. 1.5 hs en total.","Precio aproximado por agencia: entre $25.000 y $35.000 por persona, generalmente incluye transporte, equipo y guía.","Conviene reservar con anticipación, sobre todo en temporada alta."],
+        outfit:["Ropa cómoda y calzado cerrado","Pelo atado si es largo"],
+        pack:["Cámara o celular (algunas agencias dan fotos digitales incluidas)"]}
     ]
   },
   {
