@@ -785,12 +785,7 @@ const DAYS = [
   {
     dow:"Viernes", num:14, loc:"Pucón", tag:"Pucón",
     items:[
-      {icon:"🚣", title:"Rafting", meta:"Mañana",
-        maps:"Rafting Río Trancura, Pucón, Chile",
-        tips:["La agencia suele dar traje de neopreno, casco y chaleco — confirmar qué incluye.","Dejar objetos de valor (celular, billetera) guardados, no llevarlos sueltos en la balsa.","Van a mojarse por completo, aunque no se caigan del bote."],
-        outfit:["Ropa que se pueda mojar por debajo del neopreno","Calzado que se pueda mojar (no ojotas sueltas)"],
-        pack:["Muda seca y toalla para después"]},
-      {icon:"💦", title:"Tour de los saltos", meta:"Tarde", ember:true,
+      {icon:"💦", title:"Tour de los saltos", meta:"Mañana", ember:true,
         sub:[
           {name:"Mirador Laguna El León", maps:"Mirador Laguna El León, Pucón, Chile"},
           {name:"Salto El León", maps:"Salto El León, Pucón, Chile"},
@@ -798,7 +793,12 @@ const DAYS = [
         ],
         tips:["Senderos cerca de agua suelen tener piedras húmedas y resbaladizas."],
         outfit:["Calzado con buen agarre (antideslizante)","Campera o poncho impermeable"],
-        pack:["Cámara"]}
+        pack:["Cámara"]},
+      {icon:"🚣", title:"Rafting", meta:"14:00 hs",
+        maps:"Rafting Río Trancura, Pucón, Chile",
+        tips:["La agencia suele dar traje de neopreno, casco y chaleco — confirmar qué incluye.","Dejar objetos de valor (celular, billetera) guardados, no llevarlos sueltos en la balsa.","Van a mojarse por completo, aunque no se caigan del bote."],
+        outfit:["Ropa que se pueda mojar por debajo del neopreno","Calzado que se pueda mojar (no ojotas sueltas)"],
+        pack:["Muda seca y toalla para después"]}
     ]
   },
   {
