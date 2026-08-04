@@ -640,6 +640,9 @@ const DAYS = [
         note:"Av. Pedro de Valdivia 150, 7500000 Santiago, Chile · Tel: +56 9 6606 1427",
         maps:"Av. Pedro de Valdivia 150, Santiago, Chile",
         tips:["Coordinar el horario de llegada con anticipación, sobre todo si es de noche.","Guardar el contacto y la dirección descargados por si no hay señal.","Confirmar el método de entrega de llaves (portero, caja de seguridad, etc.)."]},
+      {icon:"🎉", title:"Club Amanda", note:"Posible salida de noche, después del check-in",
+        maps:"https://maps.apple/p/4FvQ01v3AdHKko",
+        links:[{icon:"📷", title:"Instagram", url:"https://www.instagram.com/clubamanda?igsh=MXZ1M2VnOW8zc3p4Ng=="}]},
       {icon:"🍽️", title:"Comer y tomar algo", note:"VIP del aeropuerto",
         tips:["Confirmar si el acceso al VIP es por tarjeta, membresía o pase pago.","Suele cerrar el ingreso un rato antes del embarque, no quedarse mucho tiempo."]},
       {icon:"🍸", title:"Restaurant o bar",
@@ -865,6 +868,7 @@ const APPS = [
 ];
 
 function mapsUrl(q){
+  if(/^https?:\/\//i.test(q)) return q;
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
 }
 
@@ -977,7 +981,7 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
       <div class="sheet-close" onclick="closeDetail()">✕</div>
     </div>
     ${note?`<p class="sheet-note">${note}</p>`:''}
-    ${maps?`<a class="sheet-maps" href="${mapsUrl(maps)}" target="_blank" rel="noopener">📍 Ver en Google Maps</a>`:''}
+    ${maps?`<a class="sheet-maps" href="${mapsUrl(maps)}" target="_blank" rel="noopener">📍 Ver en Maps</a>`:''}
   `;
 
   const hasTips = tips && tips.length;
@@ -1049,7 +1053,7 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
 
 function openDetail(dayIdx, itemIdx){
   const it = DAYS[dayIdx].items[itemIdx];
-  renderSheet(it.icon, it.title, it.meta, it.note, it.tips, it.outfit, it.pack, it.maps, it.sub);
+  renderSheet(it.icon, it.title, it.meta, it.note, it.tips, it.outfit, it.pack, it.maps, it.sub, it.links);
 }
 
 function openGroupDetail(dayIdx, itemIdx, boxIdx){
