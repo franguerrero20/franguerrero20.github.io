@@ -716,16 +716,20 @@ const DAYS = [
         pack:["Toalla","Protector solar"]},
       {icon:"🕳️", title:"Cuevas volcánicas", meta:"11:00 hs · ~5 hs de duración",
         maps:"Cuevas Volcánicas de Pucón, Chile",
+        note:"Programado con la agencia (7 personas) · $40.000 c/u",
         tips:["Adentro la temperatura baja bastante respecto al exterior.","Conviene reservar la entrada con anticipación, sobre todo en temporada alta."],
         outfit:["Campera de abrigo","Calzado cerrado con buen agarre"],
-        pack:["Linterna de celular cargada"]}
+        pack:["Linterna de celular cargada"]},
+      {icon:"🥾", title:"Probar indumentaria", note:"Con la agencia, para el ascenso al volcán del martes",
+        tips:["Probarse crampones, piolet, casco y botas antes del día del ascenso, para llegar con todo ajustado."]}
     ]
   },
   {
     dow:"Martes", num:11, loc:"Pucón", tag:"Pucón",
     items:[
-      {icon:"🌋", title:"Ascenso Volcán Villarrica", meta:"Día completo", ember:true,
+      {icon:"🌋", title:"Ascenso Volcán Villarrica", meta:"Salida 06:30 hs · Día completo", ember:true,
         maps:"Volcán Villarrica, Chile",
+        note:"Programado con la agencia (7 personas) · $135.000 c/u",
         tips:["Se hace con agencia autorizada por CONAF, con guía obligatorio — reservar con anticipación.","Es una exigencia física alta (jornada larga, terreno de nieve/ceniza en pendiente).","El clima arriba puede cambiar rápido, aunque abajo esté despejado.","La agencia suele proveer crampones, piolet y casco — confirmar qué incluye la reserva.","Ir con buen descanso la noche anterior."],
         outfit:["Ropa técnica en capas (térmica + abrigo + cortaviento)","Guantes y gorro","Gafas de sol/nieve","Botas de trekking (o las que provea la agencia)"],
         pack:["Protector solar alto (la nieve refleja mucho)","Mochila pequeña con agua y comida energética"]},
@@ -764,9 +768,10 @@ const DAYS = [
     dow:"Jueves", num:13, loc:"Pucón", tag:"Pucón · grupos",
     items:[
       {group:true, boxes:[
-        {label:"Grupo 1", icon:"⛷️", title:"Ski",
+        {label:"Grupo 1", icon:"⛷️", title:"Ski", meta:"09:00 hs",
           maps:"Centro de Ski Pucón, Chile",
-          tips:["Confirmar que el centro de ski esté operando (depende de nieve/temporada).","Si no tienen equipo propio, se puede alquilar en el centro o en Pucón."],
+          note:"Programado con la agencia (4 personas) · $90.000 c/u",
+          tips:["2 horas de clases + 2-3 horas libres.","Confirmar que el centro de ski esté operando (depende de nieve/temporada).","Si no tienen equipo propio, se puede alquilar en el centro o en Pucón."],
           outfit:["Ropa térmica e impermeable","Guantes, gorro y gafas de sol/nieve"],
           pack:["Protector solar alto"]},
         {label:"Grupo 2", icon:"🏔️", title:"Lagunas andinas y La China",
@@ -802,6 +807,7 @@ const DAYS = [
         pack:["Cámara"]},
       {icon:"🚣", title:"Rafting", meta:"14:00 hs",
         maps:"Rafting Río Trancura, Pucón, Chile",
+        note:"Programado con la agencia (7 personas) · $40.000 c/u",
         tips:["La agencia suele dar traje de neopreno, casco y chaleco — confirmar qué incluye.","Dejar objetos de valor (celular, billetera) guardados, no llevarlos sueltos en la balsa.","Van a mojarse por completo, aunque no se caigan del bote."],
         outfit:["Ropa que se pueda mojar por debajo del neopreno","Calzado que se pueda mojar (no ojotas sueltas)"],
         pack:["Muda seca y toalla para después"]},
@@ -1069,7 +1075,7 @@ function openDetail(dayIdx, itemIdx){
 
 function openGroupDetail(dayIdx, itemIdx, boxIdx){
   const b = DAYS[dayIdx].items[itemIdx].boxes[boxIdx];
-  renderSheet(b.icon, `${b.label}: ${b.title}`, null, null, b.tips, b.outfit, b.pack, b.maps, null);
+  renderSheet(b.icon, `${b.label}: ${b.title}`, b.meta, b.note, b.tips, b.outfit, b.pack, b.maps, null);
 }
 
 function openGeneralInfo(){
