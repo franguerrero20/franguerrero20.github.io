@@ -594,7 +594,18 @@ h1.title span{color:var(--ember);}
   border-bottom:1px solid var(--line);
 }
 .settle-list li:last-child{border-bottom:none;}
+.settle-right{display:flex; align-items:center; gap:8px;}
 .settle-amt{font-weight:600; color:var(--gold);}
+.settle-btn{
+  font-size:11px; font-weight:700;
+  color:var(--bg);
+  background:var(--gold);
+  border:none;
+  padding:5px 10px;
+  border-radius:20px;
+  cursor:pointer;
+}
+.settle-btn:active{opacity:0.85;}
 .gastos-form{display:flex; flex-direction:column; gap:8px;}
 .gastos-input{
   width:100%;
@@ -643,6 +654,17 @@ h1.title span{color:var(--ember);}
   cursor:pointer;
 }
 .gastos-submit:active{opacity:0.85;}
+.gastos-cancel{
+  margin-top:6px;
+  background:none;
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  border-radius:20px;
+  padding:9px;
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+}
 .gastos-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
 .gasto-row{
   display:flex; align-items:center; gap:10px;
@@ -654,8 +676,8 @@ h1.title span{color:var(--ember);}
 .gasto-row-main{flex:1; min-width:0;}
 .gasto-desc{font-size:13.5px; font-weight:600; color:var(--text); margin:0 0 2px;}
 .gasto-meta{font-size:12px; color:var(--text-dim); margin:0;}
-.gasto-delete{
-  flex:0 0 auto;
+.gasto-actions{flex:0 0 auto; display:flex; gap:2px;}
+.gasto-edit, .gasto-delete{
   background:none; border:none;
   font-size:15px;
   cursor:pointer;
@@ -1184,7 +1206,7 @@ overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeDetail(); }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc,
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 
@@ -1206,6 +1228,7 @@ const CURRENCIES = ["CLP","USD","UYU"];
 const CURRENCY_SYMBOL = { CLP:"$", USD:"US$", UYU:"$U" };
 let expensesCache = [];
 let splitSelection = new Set(PEOPLE);
+let editingId = null;
 
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
@@ -1235,6 +1258,10 @@ function toUYU(amount, currency){
 function money(n, currency){
   const symbol = CURRENCY_SYMBOL[currency] || '$';
   return `${symbol}${Math.round(n).toLocaleString('es-CL')}`;
+}
+
+function esc(str){
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function computeUnifiedBalances(expenses){
@@ -1289,6 +1316,7 @@ function computeSettlements(balances){
 }
 
 function renderGastosView(){
+  const editingExpense = editingId ? expensesCache.find(x => x.id === editingId) : null;
   const totalsByCurrency = computeTotalsByCurrency(expensesCache);
   const currenciesUsed = Object.keys(totalsByCurrency);
 
@@ -1305,26 +1333,49 @@ function renderGastosView(){
   }).join('');
   const settlements = computeSettlements(unifiedBalances);
   const settleHtml = settlements.length
-    ? `<ul class="settle-list">${settlements.map(s=>`<li><span class="settle-names">${s.from} → ${s.to}</span><span class="settle-amt">${money(s.amount, 'UYU')}</span></li>`).join('')}</ul>`
+    ? `<ul class="settle-list">${settlements.map(s=>`<li>
+        <span class="settle-names">${s.from} → ${s.to}</span>
+        <span class="settle-right">
+          <span class="settle-amt">${money(s.amount, 'UYU')}</span>
+          <button type="button" class="settle-btn" onclick="saldarDeuda('${s.from}','${s.to}',${s.amount})">Saldar</button>
+        </span>
+      </li>`).join('')}</ul>`
     : `<p class="no-info">Todos al día.</p>`;
   const balanceSectionsHtml = expensesCache.length
     ? `<ul class="balance-list">${balanceRows}</ul><p class="gastos-label">Quién le paga a quién</p>${settleHtml}`
     : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
 
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
-  const payerOptions = PEOPLE.map(p=>`<option value="${p}">${p}</option>`).join('');
-  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const currentPagador = editingExpense ? editingExpense.pagadoPor : PEOPLE[0];
+  const currentMoneda = editingExpense ? (editingExpense.moneda || 'CLP') : 'CLP';
+  const payerOptions = PEOPLE.map(p=>`<option value="${p}"${p===currentPagador?' selected':''}>${p}</option>`).join('');
+  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}"${c===currentMoneda?' selected':''}>${c}</option>`).join('');
+  const descValue = editingExpense ? esc(editingExpense.descripcion || '') : '';
+  const montoValue = editingExpense ? editingExpense.monto : '';
 
   const listHtml = expensesCache.length ? expensesCache.map(e=>{
     const monto = Number(e.monto) || 0;
     const currency = e.moneda || 'CLP';
+    const actionsHtml = `<div class="gasto-actions">
+        <button type="button" class="gasto-edit" onclick="editGasto('${e.id}')">✏️</button>
+        <button type="button" class="gasto-delete" onclick="deleteGasto('${e.id}')">🗑️</button>
+      </div>`;
+    if(e.esSaldo){
+      return `<li class="gasto-row">
+        <div class="gasto-row-main">
+          <p class="gasto-desc">💸 ${e.pagadoPor} le pagó a ${(e.entre||[])[0]||''}</p>
+          <p class="gasto-meta">${money(monto, currency)}</p>
+        </div>
+        ${actionsHtml}
+      </li>`;
+    }
     const entreTxt = (e.entre && e.entre.length === PEOPLE.length) ? 'todos' : (e.entre||[]).join(', ');
     return `<li class="gasto-row">
       <div class="gasto-row-main">
         <p class="gasto-desc">${e.descripcion || '(sin descripción)'}</p>
         <p class="gasto-meta">Pagó ${e.pagadoPor} · ${money(monto, currency)} · entre ${entreTxt}</p>
       </div>
-      <button type="button" class="gasto-delete" onclick="deleteGasto('${e.id}')">🗑️</button>
+      ${actionsHtml}
     </li>`;
   }).join('') : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
 
@@ -1345,18 +1396,19 @@ function renderGastosView(){
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-title">Agregar gasto</p>
+      <p class="sheet-section-title">${editingId ? 'Editar gasto' : 'Agregar gasto'}</p>
       <div class="gastos-form">
         <p class="gastos-label">Pagó</p>
         <select id="gasto-pagador" class="gastos-input">${payerOptions}</select>
-        <input type="text" id="gasto-desc" class="gastos-input" placeholder="Descripción (ej: Supermercado)">
+        <input type="text" id="gasto-desc" class="gastos-input" placeholder="Descripción (ej: Supermercado)" value="${descValue}">
         <div class="gastos-row-inline">
-          <input type="number" id="gasto-monto" class="gastos-input" placeholder="Monto" inputmode="numeric">
+          <input type="number" id="gasto-monto" class="gastos-input" placeholder="Monto" inputmode="numeric" value="${montoValue}">
           <select id="gasto-moneda" class="gastos-input gastos-moneda">${currencyOptions}</select>
         </div>
         <p class="gastos-label">Se divide entre</p>
         <div class="gastos-chips">${chipsHtml}</div>
-        <button type="button" class="gastos-submit" onclick="submitGasto()">Agregar gasto</button>
+        <button type="button" class="gastos-submit" onclick="submitGasto()">${editingId ? 'Guardar cambios' : 'Agregar gasto'}</button>
+        ${editingId ? `<button type="button" class="gastos-cancel" onclick="cancelEdit()">Cancelar edición</button>` : ''}
       </div>
     </div>
 
@@ -1368,6 +1420,8 @@ function renderGastosView(){
 }
 
 window.openGastos = function(){
+  editingId = null;
+  splitSelection = new Set(PEOPLE);
   renderGastosView();
   overlay.classList.add('open');
 };
@@ -1395,16 +1449,44 @@ window.submitGasto = async function(){
     return;
   }
 
-  await addDoc(expensesCol, {
-    descripcion: desc,
-    monto: monto,
-    moneda: moneda,
-    pagadoPor: pagador,
-    entre: entre,
-    creadoEn: serverTimestamp()
-  });
+  const data = { descripcion: desc, monto, moneda, pagadoPor: pagador, entre };
+
+  if(editingId){
+    await updateDoc(doc(db, 'expenses', editingId), data);
+    editingId = null;
+  } else {
+    await addDoc(expensesCol, { ...data, creadoEn: serverTimestamp() });
+  }
 
   splitSelection = new Set(PEOPLE);
+};
+
+window.editGasto = function(id){
+  const e = expensesCache.find(x => x.id === id);
+  if(!e) return;
+  editingId = id;
+  splitSelection = new Set((e.entre && e.entre.length) ? e.entre : PEOPLE);
+  renderGastosView();
+  document.getElementById('gasto-pagador').scrollIntoView({block:'center'});
+};
+
+window.cancelEdit = function(){
+  editingId = null;
+  splitSelection = new Set(PEOPLE);
+  renderGastosView();
+};
+
+window.saldarDeuda = async function(from, to, amount){
+  if(!confirm(`¿Confirmás que ${from} le pagó ${money(amount,'UYU')} a ${to}?`)) return;
+  await addDoc(expensesCol, {
+    descripcion: `Pago: ${from} a ${to}`,
+    monto: amount,
+    moneda: 'UYU',
+    pagadoPor: from,
+    entre: [to],
+    esSaldo: true,
+    creadoEn: serverTimestamp()
+  });
 };
 
 window.deleteGasto = async function(id){
