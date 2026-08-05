@@ -1441,6 +1441,29 @@ const firebaseConfig = {
   appId: "1:610371114416:web:f42fb7a44e0c2357477275"
 };
 
+const ONESIGNAL_APP_ID = "6802f243-107a-4423-9329-d9300c48ef35";
+const ONESIGNAL_REST_API_KEY = "os_v2_app_nabpeqyqpjcchezj3eyayshpgwu7gow7gfsunhvqzboq7ezpkacecm62jtwl4syzq7efs74i2qyrcgewstvlvqy4c5ezkarzacxlaua";
+
+async function sendPushNotification(heading, message){
+  try{
+    await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': 'Key ' + ONESIGNAL_REST_API_KEY
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        included_segments: ['Subscribed Users'],
+        headings: { en: heading },
+        contents: { en: message }
+      })
+    });
+  } catch(err){
+    console.error('[push] no se pudo enviar la notificación', err);
+  }
+}
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const expensesCol = collection(db, "expenses");
@@ -1450,7 +1473,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 15;
+const APP_VERSION = 16;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1749,6 +1772,7 @@ window.submitGasto = async function(){
       await updateDoc(doc(db, 'expenses', editingId), data);
     } else {
       await addDoc(expensesCol, { ...data, creadoEn: serverTimestamp() });
+      sendPushNotification('💸 Nuevo gasto', `${pagador} cargó ${money(monto, moneda)} · ${desc}`);
     }
     setWhoAmI(pagador);
     editingId = null;
