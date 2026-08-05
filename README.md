@@ -586,6 +586,15 @@ h1.title span{color:var(--ember);}
 .balance-amt.pos{color:var(--glacial);}
 .balance-amt.neg{color:var(--ember);}
 .balance-amt.zero{color:var(--text-faint); font-weight:500;}
+.settle-list{list-style:none; margin:0; padding:0;}
+.settle-list li{
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:13px; color:var(--text);
+  padding:7px 0;
+  border-bottom:1px solid var(--line);
+}
+.settle-list li:last-child{border-bottom:none;}
+.settle-amt{font-weight:600; color:var(--gold);}
 .gastos-form{display:flex; flex-direction:column; gap:8px;}
 .gastos-input{
   width:100%;
@@ -1232,6 +1241,34 @@ function computeTotalsByCurrency(expenses){
   return totals;
 }
 
+// Greedy debt simplification: matches the biggest debtor with the biggest
+// creditor each round, so the group ends up with the fewest transfers needed.
+function computeSettlements(balances){
+  const creditors = [];
+  const debtors = [];
+  Object.entries(balances).forEach(([name, amt]) => {
+    const rounded = Math.round(amt);
+    if(rounded > 0) creditors.push({name, amt: rounded});
+    else if(rounded < 0) debtors.push({name, amt: -rounded});
+  });
+  creditors.sort((a,b)=>b.amt-a.amt);
+  debtors.sort((a,b)=>b.amt-a.amt);
+
+  const settlements = [];
+  let i=0, j=0;
+  while(i<debtors.length && j<creditors.length){
+    const debtor = debtors[i];
+    const creditor = creditors[j];
+    const amount = Math.min(debtor.amt, creditor.amt);
+    if(amount > 0) settlements.push({from: debtor.name, to: creditor.name, amount});
+    debtor.amt -= amount;
+    creditor.amt -= amount;
+    if(debtor.amt === 0) i++;
+    if(creditor.amt === 0) j++;
+  }
+  return settlements;
+}
+
 function renderGastosView(){
   const balancesByCurrency = computeBalancesByCurrency(expensesCache);
   const totalsByCurrency = computeTotalsByCurrency(expensesCache);
@@ -1249,7 +1286,12 @@ function renderGastosView(){
       const label = b>0 ? `le deben ${money(b, currency)}` : (b<0 ? `debe ${money(-b, currency)}` : 'al día');
       return `<li><span>${p}</span><span class="balance-amt ${cls}">${label}</span></li>`;
     }).join('');
-    return `<p class="gastos-label">${currency}</p><ul class="balance-list">${rows}</ul>`;
+    const settlements = computeSettlements(balances);
+    const settleHtml = settlements.length
+      ? `<ul class="settle-list">${settlements.map(s=>`<li><span class="settle-names">${s.from} → ${s.to}</span><span class="settle-amt">${money(s.amount, currency)}</span></li>`).join('')}</ul>`
+      : `<p class="no-info">Todos al día.</p>`;
+    return `<p class="gastos-label">${currency}</p><ul class="balance-list">${rows}</ul>
+      <p class="gastos-label">Quién le paga a quién</p>${settleHtml}`;
   }).join('') : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
 
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
