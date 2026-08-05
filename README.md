@@ -574,6 +574,82 @@ h1.title span{color:var(--ember);}
 .apps-title{font-size:13.5px; font-weight:600; margin:0 0 2px;}
 .apps-desc{font-size:12px; color:var(--text-dim); line-height:1.4; margin:0;}
 .apps-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px; margin-top:2px;}
+.balance-list{list-style:none; margin:0; padding:0;}
+.balance-list li{
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:13px; color:var(--text);
+  padding:7px 0;
+  border-bottom:1px solid var(--line);
+}
+.balance-list li:last-child{border-bottom:none;}
+.balance-amt{font-weight:600;}
+.balance-amt.pos{color:var(--glacial);}
+.balance-amt.neg{color:var(--ember);}
+.balance-amt.zero{color:var(--text-faint); font-weight:500;}
+.gastos-form{display:flex; flex-direction:column; gap:8px;}
+.gastos-input{
+  width:100%;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  color:var(--text);
+  font-size:13.5px;
+  font-family:inherit;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.gastos-input::placeholder{color:var(--text-faint);}
+.gastos-label{
+  font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-faint); font-weight:700; margin:4px 0 0;
+}
+.gastos-chips{display:flex; flex-wrap:wrap; gap:6px;}
+.gastos-chip{
+  font-size:12px; font-weight:600;
+  color:var(--text-dim);
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  padding:6px 11px;
+  border-radius:20px;
+  cursor:pointer;
+}
+.gastos-chip.selected{
+  color:var(--glacial);
+  background:var(--glacial-soft);
+  border-color:rgba(79,179,166,0.35);
+}
+.gastos-submit{
+  margin-top:4px;
+  background:var(--glacial);
+  color:var(--bg);
+  border:none;
+  border-radius:20px;
+  padding:11px;
+  font-size:13.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.gastos-submit:active{opacity:0.85;}
+.gastos-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.gasto-row{
+  display:flex; align-items:center; gap:10px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+}
+.gasto-row-main{flex:1; min-width:0;}
+.gasto-desc{font-size:13.5px; font-weight:600; color:var(--text); margin:0 0 2px;}
+.gasto-meta{font-size:12px; color:var(--text-dim); margin:0;}
+.gasto-delete{
+  flex:0 0 auto;
+  background:none; border:none;
+  font-size:15px;
+  cursor:pointer;
+  opacity:0.7;
+  padding:4px;
+}
 .reload-btn{
   position:fixed;
   top:calc(10px + env(safe-area-inset-top));
@@ -604,6 +680,7 @@ h1.title span{color:var(--ember);}
     <button class="hero-cta" onclick="openNotesInfo()">📎 Notas y documentos</button>
     <button class="hero-cta" onclick="openInstallInfo()">📲 Cómo instalar</button>
     <button class="hero-cta" onclick="openAppsInfo()">📱 Apps útiles</button>
+    <button class="hero-cta" onclick="openGastos()">💰 Gastos</button>
   </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
@@ -1090,6 +1167,160 @@ function closeDetail(){
   overlay.classList.remove('open');
 }
 overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeDetail(); });
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, deleteDoc, doc,
+  onSnapshot, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB2P3bMwSv83q1NFLmqOZwahpJicMxA-ak",
+  authDomain: "pucon-db.firebaseapp.com",
+  projectId: "pucon-db",
+  storageBucket: "pucon-db.firebasestorage.app",
+  messagingSenderId: "610371114416",
+  appId: "1:610371114416:web:f42fb7a44e0c2357477275"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const expensesCol = collection(db, "expenses");
+
+const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
+let expensesCache = [];
+let splitSelection = new Set(PEOPLE);
+
+const overlay = document.getElementById('overlay');
+const sheet = document.getElementById('sheet');
+
+function money(n){
+  return Math.round(n).toLocaleString('es-CL');
+}
+
+function computeBalances(expenses){
+  const balances = {};
+  PEOPLE.forEach(p => balances[p] = 0);
+  expenses.forEach(e => {
+    const monto = Number(e.monto) || 0;
+    const entre = (e.entre && e.entre.length) ? e.entre : PEOPLE;
+    const share = monto / entre.length;
+    if(balances[e.pagadoPor] !== undefined) balances[e.pagadoPor] += monto;
+    entre.forEach(p => { if(balances[p] !== undefined) balances[p] -= share; });
+  });
+  return balances;
+}
+
+function renderGastosView(){
+  const balances = computeBalances(expensesCache);
+  const total = expensesCache.reduce((s,e)=>s+(Number(e.monto)||0),0);
+
+  const balanceHtml = PEOPLE.map(p=>{
+    const b = Math.round(balances[p]||0);
+    const cls = b>0 ? 'pos' : (b<0 ? 'neg' : 'zero');
+    const label = b>0 ? `le deben $${money(b)}` : (b<0 ? `debe $${money(-b)}` : 'al día');
+    return `<li><span>${p}</span><span class="balance-amt ${cls}">${label}</span></li>`;
+  }).join('');
+
+  const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
+  const payerOptions = PEOPLE.map(p=>`<option value="${p}">${p}</option>`).join('');
+
+  const listHtml = expensesCache.length ? expensesCache.map(e=>{
+    const monto = Number(e.monto) || 0;
+    const entreTxt = (e.entre && e.entre.length === PEOPLE.length) ? 'todos' : (e.entre||[]).join(', ');
+    return `<li class="gasto-row">
+      <div class="gasto-row-main">
+        <p class="gasto-desc">${e.descripcion || '(sin descripción)'}</p>
+        <p class="gasto-meta">Pagó ${e.pagadoPor} · $${money(monto)} · entre ${entreTxt}</p>
+      </div>
+      <button type="button" class="gasto-delete" onclick="deleteGasto('${e.id}')">🗑️</button>
+    </li>`;
+  }).join('') : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-icon">💰</span>
+      <div class="item-body">
+        <p class="sheet-title">Gastos del viaje</p>
+        <p class="sheet-meta">Total: $${money(total)}</p>
+      </div>
+      <div class="sheet-close" onclick="closeDetail()">✕</div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-title">Balance</p>
+      <ul class="balance-list">${balanceHtml}</ul>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-title">Agregar gasto</p>
+      <div class="gastos-form">
+        <input type="text" id="gasto-desc" class="gastos-input" placeholder="Descripción (ej: Supermercado)">
+        <input type="number" id="gasto-monto" class="gastos-input" placeholder="Monto (CLP)" inputmode="numeric">
+        <select id="gasto-pagador" class="gastos-input">${payerOptions}</select>
+        <p class="gastos-label">Se divide entre</p>
+        <div class="gastos-chips">${chipsHtml}</div>
+        <button type="button" class="gastos-submit" onclick="submitGasto()">Agregar gasto</button>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <p class="sheet-section-title">Movimientos</p>
+      <ul class="gastos-list">${listHtml}</ul>
+    </div>
+  `;
+}
+
+window.openGastos = function(){
+  renderGastosView();
+  overlay.classList.add('open');
+};
+
+window.toggleSplit = function(name, btn){
+  if(splitSelection.has(name)) splitSelection.delete(name); else splitSelection.add(name);
+  btn.classList.toggle('selected');
+};
+
+window.submitGasto = async function(){
+  const descEl = document.getElementById('gasto-desc');
+  const montoEl = document.getElementById('gasto-monto');
+  const pagador = document.getElementById('gasto-pagador').value;
+  const desc = descEl.value.trim();
+  const monto = Number(montoEl.value);
+  const entre = Array.from(splitSelection);
+
+  if(!desc || !monto || monto<=0){
+    alert('Completá la descripción y un monto válido.');
+    return;
+  }
+  if(entre.length===0){
+    alert('Elegí entre quiénes se divide el gasto.');
+    return;
+  }
+
+  await addDoc(expensesCol, {
+    descripcion: desc,
+    monto: monto,
+    pagadoPor: pagador,
+    entre: entre,
+    creadoEn: serverTimestamp()
+  });
+
+  splitSelection = new Set(PEOPLE);
+};
+
+window.deleteGasto = async function(id){
+  if(!confirm('¿Borrar este gasto?')) return;
+  await deleteDoc(doc(db, 'expenses', id));
+};
+
+onSnapshot(query(expensesCol, orderBy('creadoEn','desc')), snap => {
+  expensesCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  if(sheet.querySelector('.gastos-list')) renderGastosView();
+});
 </script>
 
 </body>
