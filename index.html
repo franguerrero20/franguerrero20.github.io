@@ -692,33 +692,6 @@ h1.title span{color:var(--ember);}
   font-weight:600;
   cursor:pointer;
 }
-.whoami-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:12px;
-  padding-bottom:12px;
-  border-bottom:1px dashed var(--line);
-}
-.whoami-label{
-  font-size:11px;
-  color:var(--text-faint);
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-  font-weight:700;
-}
-.whoami-select{
-  flex:0 0 auto;
-  background:var(--bg-elev-2);
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:6px 10px;
-  color:var(--glacial);
-  font-size:12.5px;
-  font-weight:700;
-  font-family:inherit;
-}
 .gastos-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
 .gasto-row{
   display:flex; align-items:center; gap:10px;
@@ -1379,7 +1352,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1395,11 +1368,10 @@ function getWhoAmI(){
 }
 let miPersona = getWhoAmI();
 
-window.setWhoAmI = function(name){
+function setWhoAmI(name){
   miPersona = name;
   localStorage.setItem('miPersona', name);
-  renderGastosView();
-};
+}
 
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
@@ -1527,7 +1499,6 @@ function renderGastosView(){
 
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
   const currentPagador = editingExpense ? editingExpense.pagadoPor : miPersona;
-  const whoamiOptions = PEOPLE.map(p=>`<option value="${p}"${p===miPersona?' selected':''}>${p}</option>`).join('');
   const currentMoneda = editingExpense ? (editingExpense.moneda || 'CLP') : 'CLP';
   const payerOptions = PEOPLE.map(p=>`<option value="${p}"${p===currentPagador?' selected':''}>${p}</option>`).join('');
   const currencyOptions = CURRENCIES.map(c=>`<option value="${c}"${c===currentMoneda?' selected':''}>${CURRENCY_FLAG[c]}</option>`).join('');
@@ -1577,10 +1548,6 @@ function renderGastosView(){
     </div>
 
     <div class="sheet-section">
-      <div class="whoami-row">
-        <span class="whoami-label">Estás cargando gastos como</span>
-        <select id="whoami-select" class="whoami-select" onchange="setWhoAmI(this.value)">${whoamiOptions}</select>
-      </div>
       <p class="sheet-section-title">${editingId ? 'Editar gasto' : 'Agregar gasto'}</p>
       <div class="gastos-form">
         <p class="gastos-label">Pagó</p>
@@ -1645,6 +1612,7 @@ window.submitGasto = async function(){
     } else {
       await addDoc(expensesCol, { ...data, creadoEn: serverTimestamp() });
     }
+    setWhoAmI(pagador);
     editingId = null;
     splitSelection = new Set(PEOPLE);
     renderGastosView();
