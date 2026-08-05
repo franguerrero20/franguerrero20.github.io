@@ -773,7 +773,7 @@ h1.title span{color:var(--ember);}
 <button class="reload-btn" onclick="hardReload()" aria-label="Recargar sin caché">↻</button>
 
 <div class="hero">
-  <p class="eyebrow">7 – 16 de agosto</p>
+  <p class="eyebrow" id="countdown">7 – 16 de agosto</p>
   <h1 class="title">Puc<span>ó</span>n 2026</h1>
   <div class="hero-ctas">
     <button class="hero-cta-primary cta-gastos" onclick="openGastos()">💰 Gastos</button>
@@ -1292,6 +1292,30 @@ function closeDetail(){
   overlay.classList.remove('open');
 }
 overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeDetail(); });
+
+function updateCountdown(){
+  const el = document.getElementById('countdown');
+  if(!el) return;
+  const target = new Date(2026, 7, 7, 19, 0, 0);
+  const tripEnd = new Date(2026, 7, 16, 23, 59, 59);
+  const now = new Date();
+
+  if(now < target){
+    const diff = target - now;
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2,'0');
+    el.textContent = `Faltan ${days}d ${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`;
+  } else if(now <= tripEnd){
+    el.textContent = '¡Ya estamos de viaje! 🎉';
+  } else {
+    el.textContent = '7 – 16 de agosto';
+  }
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
 </script>
 
 <script type="module">
