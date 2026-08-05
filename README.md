@@ -1210,26 +1210,45 @@ let splitSelection = new Set(PEOPLE);
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
 
+// Unidades por 1 USD. Se usa como respaldo si no se puede consultar la
+// cotización en vivo (sin internet, API caída, etc.).
+const FALLBACK_RATES_USD = { CLP: 925, UYU: 40.2 };
+let ratesUSD = { ...FALLBACK_RATES_USD };
+
+fetch('https://open.er-api.com/v6/latest/USD')
+  .then(r => r.json())
+  .then(data => {
+    if(data && data.rates && data.rates.CLP && data.rates.UYU){
+      ratesUSD = { CLP: data.rates.CLP, UYU: data.rates.UYU };
+      if(sheet.querySelector('.gastos-list')) renderGastosView();
+    }
+  })
+  .catch(() => { /* se queda con el tipo de cambio de respaldo */ });
+
+function toUYU(amount, currency){
+  if(currency === 'UYU') return amount;
+  if(currency === 'USD') return amount * ratesUSD.UYU;
+  if(currency === 'CLP') return amount * (ratesUSD.UYU / ratesUSD.CLP);
+  return amount;
+}
+
 function money(n, currency){
   const symbol = CURRENCY_SYMBOL[currency] || '$';
   return `${symbol}${Math.round(n).toLocaleString('es-CL')}`;
 }
 
-function computeBalancesByCurrency(expenses){
-  const byCurrency = {};
+function computeUnifiedBalances(expenses){
+  const balances = {};
+  PEOPLE.forEach(p => balances[p] = 0);
   expenses.forEach(e => {
     const currency = e.moneda || 'CLP';
-    if(!byCurrency[currency]){
-      byCurrency[currency] = {};
-      PEOPLE.forEach(p => byCurrency[currency][p] = 0);
-    }
-    const monto = Number(e.monto) || 0;
+    const monto = toUYU(Number(e.monto) || 0, currency);
     const entre = (e.entre && e.entre.length) ? e.entre : PEOPLE;
     const share = monto / entre.length;
-    if(byCurrency[currency][e.pagadoPor] !== undefined) byCurrency[currency][e.pagadoPor] += monto;
-    entre.forEach(p => { if(byCurrency[currency][p] !== undefined) byCurrency[currency][p] -= share; });
+    if(balances[e.pagadoPor] !== undefined) balances[e.pagadoPor] += monto;
+    entre.forEach(p => { if(balances[p] !== undefined) balances[p] -= share; });
   });
-  return byCurrency;
+  return balances;
 }
 
 function computeTotalsByCurrency(expenses){
@@ -1270,7 +1289,6 @@ function computeSettlements(balances){
 }
 
 function renderGastosView(){
-  const balancesByCurrency = computeBalancesByCurrency(expensesCache);
   const totalsByCurrency = computeTotalsByCurrency(expensesCache);
   const currenciesUsed = Object.keys(totalsByCurrency);
 
@@ -1278,21 +1296,20 @@ function renderGastosView(){
     ? currenciesUsed.map(c => money(totalsByCurrency[c], c)).join(' · ')
     : money(0, 'CLP');
 
-  const balanceSectionsHtml = currenciesUsed.length ? currenciesUsed.map(currency=>{
-    const balances = balancesByCurrency[currency];
-    const rows = PEOPLE.map(p=>{
-      const b = Math.round(balances[p]||0);
-      const cls = b>0 ? 'pos' : (b<0 ? 'neg' : 'zero');
-      const label = b>0 ? `le deben ${money(b, currency)}` : (b<0 ? `debe ${money(-b, currency)}` : 'al día');
-      return `<li><span>${p}</span><span class="balance-amt ${cls}">${label}</span></li>`;
-    }).join('');
-    const settlements = computeSettlements(balances);
-    const settleHtml = settlements.length
-      ? `<ul class="settle-list">${settlements.map(s=>`<li><span class="settle-names">${s.from} → ${s.to}</span><span class="settle-amt">${money(s.amount, currency)}</span></li>`).join('')}</ul>`
-      : `<p class="no-info">Todos al día.</p>`;
-    return `<p class="gastos-label">${currency}</p><ul class="balance-list">${rows}</ul>
-      <p class="gastos-label">Quién le paga a quién</p>${settleHtml}`;
-  }).join('') : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
+  const unifiedBalances = computeUnifiedBalances(expensesCache);
+  const balanceRows = PEOPLE.map(p=>{
+    const b = Math.round(unifiedBalances[p]||0);
+    const cls = b>0 ? 'pos' : (b<0 ? 'neg' : 'zero');
+    const label = b>0 ? `le deben ${money(b, 'UYU')}` : (b<0 ? `debe ${money(-b, 'UYU')}` : 'al día');
+    return `<li><span>${p}</span><span class="balance-amt ${cls}">${label}</span></li>`;
+  }).join('');
+  const settlements = computeSettlements(unifiedBalances);
+  const settleHtml = settlements.length
+    ? `<ul class="settle-list">${settlements.map(s=>`<li><span class="settle-names">${s.from} → ${s.to}</span><span class="settle-amt">${money(s.amount, 'UYU')}</span></li>`).join('')}</ul>`
+    : `<p class="no-info">Todos al día.</p>`;
+  const balanceSectionsHtml = expensesCache.length
+    ? `<ul class="balance-list">${balanceRows}</ul><p class="gastos-label">Quién le paga a quién</p>${settleHtml}`
+    : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
 
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
   const payerOptions = PEOPLE.map(p=>`<option value="${p}">${p}</option>`).join('');
@@ -1323,7 +1340,7 @@ function renderGastosView(){
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-title">Balance</p>
+      <p class="sheet-section-title">Balance (convertido a $U, tipo de cambio aprox.)</p>
       ${balanceSectionsHtml}
     </div>
 
