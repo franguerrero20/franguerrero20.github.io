@@ -1407,7 +1407,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 12;
+const APP_VERSION = 13;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1773,7 +1773,7 @@ function renderPendientesView(){
       <span class="todo-text">${esc(t.texto || '')}</span>
       <button type="button" class="todo-delete" onclick="deleteTodo('${t.id}')">🗑️</button>
     </li>
-  `).join('') : `<p class="no-info">Todavía no hay pendientes.</p>`;
+  `).join('') : `<p class="no-info">Todavía no hay notas.</p>`;
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
@@ -1787,7 +1787,7 @@ function renderPendientesView(){
 
     <div class="sheet-section">
       <div class="todo-form">
-        <input type="text" id="todo-input" class="gastos-input" placeholder="Nuevo pendiente..." onkeydown="if(event.key==='Enter'){addTodo();}">
+        <input type="text" id="todo-input" class="gastos-input" placeholder="Nueva nota..." onkeydown="if(event.key==='Enter'){addTodo();}">
         <button type="button" class="gastos-submit todo-add-btn" onclick="addTodo()">Agregar</button>
       </div>
     </div>
@@ -1813,7 +1813,7 @@ window.addTodo = async function(){
   try {
     await addDoc(todosCol, { texto, hecho: false, creadoEn: serverTimestamp() });
     renderPendientesView();
-    showToast('✅ Pendiente agregado');
+    showToast('✅ Nota agregada');
   } catch(err){
     if(btn){ btn.disabled = false; btn.textContent = 'Agregar'; }
     showToast('⚠️ No se pudo agregar, probá de nuevo');
@@ -1835,10 +1835,10 @@ window.toggleTodo = async function(id, currentDone, el){
 };
 
 window.deleteTodo = async function(id){
-  if(!confirm('¿Borrar este pendiente?')) return;
+  if(!confirm('¿Borrar esta nota?')) return;
   try {
     await deleteDoc(doc(db, 'todos', id));
-    showToast('🗑️ Pendiente eliminado');
+    showToast('🗑️ Nota eliminada');
   } catch(err){
     showToast('⚠️ No se pudo eliminar, probá de nuevo');
   }
