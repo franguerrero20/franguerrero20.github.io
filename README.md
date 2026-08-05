@@ -776,8 +776,8 @@ h1.title span{color:var(--ember);}
   <p class="eyebrow" id="countdown">7 – 16 de agosto</p>
   <h1 class="title">Puc<span>ó</span>n 2026</h1>
   <div class="hero-ctas">
-    <button class="hero-cta-primary cta-gastos" onclick="openGastos()">💰 Gastos</button>
-    <button class="hero-cta-primary cta-pendientes" onclick="openPendientes()">✅ Pendientes</button>
+    <button class="hero-cta-primary cta-gastos" onclick="openGastos()">💸 Split</button>
+    <button class="hero-cta-primary cta-pendientes" onclick="openPendientes()">📝 Notas</button>
     <button class="hero-cta" onclick="openMasMenu()">⋯ Más</button>
   </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
@@ -1252,7 +1252,7 @@ function openGeneralInfo(){
 }
 
 function openNotesInfo(){
-  renderSheet("📎", "Notas y documentos", null, null, null, null, null, null, null, NOTES);
+  renderSheet("📎", "Documentos", null, null, null, null, null, null, null, NOTES);
 }
 
 function openInstallInfo(){
@@ -1266,7 +1266,7 @@ function openAppsInfo(){
 function openMasMenu(){
   const items = [
     {icon:"🎒", title:"Esenciales del viaje", fn:"openGeneralInfo"},
-    {icon:"📎", title:"Notas y documentos", fn:"openNotesInfo"},
+    {icon:"📎", title:"Documentos", fn:"openNotesInfo"},
     {icon:"📲", title:"Cómo instalar", fn:"openInstallInfo"},
     {icon:"📱", title:"Apps útiles", fn:"openAppsInfo"}
   ];
@@ -1309,7 +1309,7 @@ function updateCountdown(){
     const pad = n => String(n).padStart(2,'0');
     el.textContent = `Faltan ${days}d ${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`;
   } else if(now <= tripEnd){
-    el.textContent = '¡Ya estamos de viaje! 🎉';
+    el.textContent = 'Tamo activo';
   } else {
     el.textContent = '7 – 16 de agosto';
   }
@@ -1509,9 +1509,9 @@ function renderGastosView(){
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-head">
-      <span class="sheet-icon">💰</span>
+      <span class="sheet-icon">💸</span>
       <div class="item-body">
-        <p class="sheet-title">Gastos del viaje</p>
+        <p class="sheet-title">Split</p>
         <p class="sheet-meta">Total: ${totalHtml}</p>
       </div>
       <div class="sheet-close" onclick="closeDetail()">✕</div>
@@ -1658,9 +1658,9 @@ function renderPendientesView(){
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-head">
-      <span class="sheet-icon">✅</span>
+      <span class="sheet-icon">📝</span>
       <div class="item-body">
-        <p class="sheet-title">Pendientes</p>
+        <p class="sheet-title">Notas</p>
       </div>
       <div class="sheet-close" onclick="closeDetail()">✕</div>
     </div>
