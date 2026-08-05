@@ -14,6 +14,17 @@
 <!-- Android/Chrome equivalent -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f1618">
+
+<!-- OneSignal: notificaciones push (requiere agregarlo a pantalla de inicio en iOS 16.4+) -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal){
+    await OneSignal.init({
+      appId: "6802f243-107a-4423-9329-d9300c48ef35",
+    });
+  });
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -1330,7 +1341,8 @@ function openMasMenu(){
     {icon:"🎒", title:"Esenciales del viaje", fn:"openGeneralInfo"},
     {icon:"📎", title:"Documentos", fn:"openNotesInfo"},
     {icon:"📲", title:"Cómo instalar", fn:"openInstallInfo"},
-    {icon:"📱", title:"Apps útiles", fn:"openAppsInfo"}
+    {icon:"📱", title:"Apps útiles", fn:"openAppsInfo"},
+    {icon:"🔔", title:"Activar avisos", fn:"enableNotifications"}
   ];
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
@@ -1350,6 +1362,19 @@ function openMasMenu(){
   sheet.dataset.view = 'menu';
   overlay.classList.add('open');
 }
+
+window.enableNotifications = async function(){
+  if(!window.OneSignal){
+    showToast('⚠️ Todavía está cargando, esperá un segundo e intentá de nuevo.');
+    return;
+  }
+  try{
+    await OneSignal.Notifications.requestPermission();
+    showToast(OneSignal.Notifications.permission ? '🔔 Notificaciones activadas' : '🔕 No se activaron los avisos');
+  } catch(err){
+    showToast('⚠️ No se pudo activar, probá de nuevo');
+  }
+};
 
 function closeDetail(){
   overlay.classList.remove('open');
@@ -1407,7 +1432,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1460,6 +1485,7 @@ function showToast(msg){
   toast.classList.add('show');
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
+window.showToast = showToast;
 
 // Unidades por 1 USD. Se usa como respaldo si no se puede consultar la
 // cotización en vivo (sin internet, API caída, etc.).
