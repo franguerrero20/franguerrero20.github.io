@@ -1481,7 +1481,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1821,6 +1821,7 @@ window.saldarDeuda = async function(from, to, amount){
       esSaldo: true,
       creadoEn: serverTimestamp()
     });
+    sendPushNotification('✅ Deuda saldada', `${from} liquidó deuda con ${to} · ${money(amount, 'UYU')}`);
     showToast('💸 Deuda saldada');
   } catch(err){
     showToast('⚠️ No se pudo registrar el pago, probá de nuevo');
