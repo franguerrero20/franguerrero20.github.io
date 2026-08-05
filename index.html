@@ -614,6 +614,25 @@ h1.title span{color:var(--ember);}
 .balance-amt.pos{color:var(--glacial);}
 .balance-amt.neg{color:var(--ember);}
 .balance-amt.zero{color:var(--text-faint); font-weight:500;}
+.balance-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+}
+.balance-chevron{
+  color:var(--text-faint);
+  font-size:13px;
+  padding:2px 4px;
+}
+.balance-summary{
+  font-size:14.5px;
+  font-weight:700;
+  margin:2px 0 0;
+}
+.balance-summary.pos{color:var(--glacial);}
+.balance-summary.neg{color:var(--ember);}
+.balance-summary.zero{color:var(--text-faint); font-weight:500;}
 .settle-list{list-style:none; margin:0; padding:0;}
 .settle-list li{
   display:flex; align-items:center; justify-content:space-between;
@@ -650,7 +669,7 @@ h1.title span{color:var(--ember);}
 .gastos-input::placeholder{color:var(--text-faint);}
 .gastos-row-inline{display:flex; gap:8px;}
 .gastos-row-inline .gastos-input{flex:1;}
-.gastos-moneda{flex:0 0 64px; text-align:center;}
+.gastos-moneda{flex:0 0 98px;}
 .gastos-label{
   font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
   color:var(--text-faint); font-weight:700; margin:4px 0 0;
@@ -1373,7 +1392,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1393,6 +1412,13 @@ function setWhoAmI(name){
   miPersona = name;
   localStorage.setItem('miPersona', name);
 }
+
+let balanceCollapsed = localStorage.getItem('balanceCollapsed') !== 'false';
+window.toggleBalance = function(){
+  balanceCollapsed = !balanceCollapsed;
+  localStorage.setItem('balanceCollapsed', String(balanceCollapsed));
+  renderGastosView();
+};
 
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
@@ -1518,11 +1544,18 @@ function renderGastosView(){
     ? `<ul class="balance-list">${balanceRows}</ul><p class="gastos-label">Quién le paga a quién</p>${settleHtml}`
     : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
 
+  const myBalance = Math.round(unifiedBalances[miPersona] || 0);
+  const summaryCls = myBalance>0 ? 'pos' : (myBalance<0 ? 'neg' : 'zero');
+  const summaryText = !expensesCache.length
+    ? 'Todavía no hay gastos cargados.'
+    : (myBalance>0 ? `Te deben ${money(myBalance,'UYU')}` : (myBalance<0 ? `Debés ${money(-myBalance,'UYU')}` : 'Estás al día'));
+  const balanceTitle = balanceCollapsed ? 'Balance' : 'Balance (convertido a $U, tipo de cambio aprox.)';
+
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
   const currentPagador = editingExpense ? editingExpense.pagadoPor : miPersona;
   const currentMoneda = editingExpense ? (editingExpense.moneda || 'CLP') : 'CLP';
   const payerOptions = PEOPLE.map(p=>`<option value="${p}"${p===currentPagador?' selected':''}>${p}</option>`).join('');
-  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}"${c===currentMoneda?' selected':''}>${CURRENCY_FLAG[c]}</option>`).join('');
+  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}"${c===currentMoneda?' selected':''}>${CURRENCY_FLAG[c]} - ${c}</option>`).join('');
   const descValue = editingExpense ? esc(editingExpense.descripcion || '') : '';
   const montoValue = editingExpense ? editingExpense.monto : '';
 
@@ -1564,8 +1597,11 @@ function renderGastosView(){
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-title">Balance (convertido a $U, tipo de cambio aprox.)</p>
-      ${balanceSectionsHtml}
+      <div class="balance-header" onclick="toggleBalance()">
+        <p class="sheet-section-title">${balanceTitle}</p>
+        <span class="balance-chevron">${balanceCollapsed ? '▾' : '▴'}</span>
+      </div>
+      ${balanceCollapsed ? `<p class="balance-summary ${summaryCls}">${summaryText}</p>` : balanceSectionsHtml}
     </div>
 
     <div class="sheet-section">
