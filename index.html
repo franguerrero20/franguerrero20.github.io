@@ -1441,24 +1441,17 @@ const firebaseConfig = {
   appId: "1:610371114416:web:f42fb7a44e0c2357477275"
 };
 
-const ONESIGNAL_APP_ID = "6802f243-107a-4423-9329-d9300c48ef35";
-const ONESIGNAL_REST_API_KEY = "os_v2_app_nabpeqyqpjcchezj3eyayshpgwu7gow7gfsunhvqzboq7ezpkacecm62jtwl4syzq7efs74i2qyrcgewstvlvqy4c5ezkarzacxlaua";
+const PUSH_RELAY_URL = "https://pucon-push-relay.franguerrerob1.workers.dev";
 
 async function sendPushNotification(heading, message){
   try{
     console.log('[push] enviando...', heading, message);
-    const res = await fetch('https://onesignal.com/api/v1/notifications', {
+    const res = await fetch(PUSH_RELAY_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Key ' + ONESIGNAL_REST_API_KEY
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        included_segments: ['Subscribed Users'],
-        headings: { en: heading },
-        contents: { en: message }
-      })
+      body: JSON.stringify({ heading, message })
     });
     const resData = await res.json().catch(() => null);
     console.log('[push] respuesta', res.status, resData);
@@ -1475,7 +1468,7 @@ async function sendPushNotification(heading, message){
     }
   } catch(err){
     console.error('[push] no se pudo enviar la notificación', err);
-    setTimeout(() => showToast('⚠️ No se pudo avisar al grupo (sin conexión con OneSignal)'), 1600);
+    setTimeout(() => showToast('⚠️ No se pudo avisar al grupo (sin conexión con el servicio de avisos)'), 1600);
   }
 }
 
@@ -1488,7 +1481,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 17;
+const APP_VERSION = 18;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
