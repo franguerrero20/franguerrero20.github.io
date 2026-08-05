@@ -94,6 +94,23 @@ h1.title span{color:var(--ember);}
   z-index:2;
 }
 .hero-cta:active{background:var(--bg-elev-2);}
+.hero-cta-primary{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--bg);
+  border:none;
+  padding:8px 14px;
+  border-radius:20px;
+  cursor:pointer;
+  position:relative;
+  z-index:2;
+}
+.hero-cta-primary:active{opacity:0.85;}
+.hero-cta-primary.cta-gastos{background:var(--gold);}
+.hero-cta-primary.cta-pendientes{background:var(--glacial);}
 .hero-ctas{
   display:flex;
   flex-wrap:wrap;
@@ -551,6 +568,10 @@ h1.title span{color:var(--ember);}
   padding:11px 12px;
   text-decoration:none;
   color:var(--text);
+  cursor:pointer;
+  font:inherit;
+  text-align:left;
+  width:100%;
 }
 .notes-row:active{border-color:var(--text-faint);}
 .notes-icon{font-size:18px; flex:0 0 auto;}
@@ -755,12 +776,9 @@ h1.title span{color:var(--ember);}
   <p class="eyebrow">7 – 16 de agosto</p>
   <h1 class="title">Puc<span>ó</span>n 2026</h1>
   <div class="hero-ctas">
-    <button class="hero-cta" onclick="openGeneralInfo()">🎒 Esenciales del viaje</button>
-    <button class="hero-cta" onclick="openNotesInfo()">📎 Notas y documentos</button>
-    <button class="hero-cta" onclick="openInstallInfo()">📲 Cómo instalar</button>
-    <button class="hero-cta" onclick="openAppsInfo()">📱 Apps útiles</button>
-    <button class="hero-cta" onclick="openGastos()">💰 Gastos</button>
-    <button class="hero-cta" onclick="openPendientes()">✅ Pendientes</button>
+    <button class="hero-cta-primary cta-gastos" onclick="openGastos()">💰 Gastos</button>
+    <button class="hero-cta-primary cta-pendientes" onclick="openPendientes()">✅ Pendientes</button>
+    <button class="hero-cta" onclick="openMasMenu()">⋯ Más</button>
   </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
@@ -1243,6 +1261,31 @@ function openInstallInfo(){
 
 function openAppsInfo(){
   renderSheet("📱", "Apps útiles", null, null, null, null, null, null, null, null, null, APPS);
+}
+
+function openMasMenu(){
+  const items = [
+    {icon:"🎒", title:"Esenciales del viaje", fn:"openGeneralInfo"},
+    {icon:"📎", title:"Notas y documentos", fn:"openNotesInfo"},
+    {icon:"📲", title:"Cómo instalar", fn:"openInstallInfo"},
+    {icon:"📱", title:"Apps útiles", fn:"openAppsInfo"}
+  ];
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-icon">⋯</span>
+      <div class="item-body">
+        <p class="sheet-title">Más</p>
+      </div>
+      <div class="sheet-close" onclick="closeDetail()">✕</div>
+    </div>
+    <ul class="notes-list">${items.map(it=>`<li><button type="button" class="notes-row" onclick="${it.fn}()">
+      <span class="notes-icon">${it.icon}</span>
+      <span class="notes-title">${it.title}</span>
+      <span class="notes-arrow">›</span>
+    </button></li>`).join('')}</ul>
+  `;
+  overlay.classList.add('open');
 }
 
 function closeDetail(){
