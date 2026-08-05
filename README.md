@@ -684,6 +684,28 @@ h1.title span{color:var(--ember);}
   opacity:0.7;
   padding:4px;
 }
+.todo-form{display:flex; gap:8px;}
+.todo-form .gastos-input{flex:1;}
+.todo-add-btn{flex:0 0 auto; margin-top:0; padding:0 18px; white-space:nowrap;}
+.todo-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.todo-row{
+  display:flex; align-items:center; gap:10px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+}
+.todo-check{font-size:17px; cursor:pointer; flex:0 0 auto; line-height:1;}
+.todo-text{flex:1; min-width:0; font-size:13.5px; color:var(--text); word-break:break-word;}
+.todo-row.done .todo-text{color:var(--text-faint); text-decoration:line-through;}
+.todo-delete{
+  flex:0 0 auto;
+  background:none; border:none;
+  font-size:15px;
+  cursor:pointer;
+  opacity:0.7;
+  padding:4px;
+}
 .reload-btn{
   position:fixed;
   top:calc(10px + env(safe-area-inset-top));
@@ -738,6 +760,7 @@ h1.title span{color:var(--ember);}
     <button class="hero-cta" onclick="openInstallInfo()">📲 Cómo instalar</button>
     <button class="hero-cta" onclick="openAppsInfo()">📱 Apps útiles</button>
     <button class="hero-cta" onclick="openGastos()">💰 Gastos</button>
+    <button class="hero-cta" onclick="openPendientes()">✅ Pendientes</button>
   </div>
   <svg class="range" viewBox="0 0 400 64" preserveAspectRatio="none">
     <polyline points="0,64 30,64 55,30 75,50 100,15 125,45 150,25 175,55 200,20 225,48 250,10 275,40 300,55 325,35 350,58 400,64"
@@ -1247,6 +1270,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const expensesCol = collection(db, "expenses");
+const todosCol = collection(db, "todos");
+let todosCache = [];
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1551,6 +1576,89 @@ window.deleteGasto = async function(id){
 onSnapshot(query(expensesCol, orderBy('creadoEn','desc')), snap => {
   expensesCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
   if(sheet.querySelector('.gastos-list')) renderGastosView();
+});
+
+function renderPendientesView(){
+  const sorted = [...todosCache].sort((a,b) => (a.hecho===b.hecho) ? 0 : (a.hecho ? 1 : -1));
+  const listHtml = sorted.length ? sorted.map(t => `
+    <li class="todo-row${t.hecho ? ' done' : ''}">
+      <span class="todo-check" onclick="toggleTodo('${t.id}', ${!!t.hecho}, this)">${t.hecho ? '✅' : '⬜'}</span>
+      <span class="todo-text">${esc(t.texto || '')}</span>
+      <button type="button" class="todo-delete" onclick="deleteTodo('${t.id}')">🗑️</button>
+    </li>
+  `).join('') : `<p class="no-info">Todavía no hay pendientes.</p>`;
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-icon">✅</span>
+      <div class="item-body">
+        <p class="sheet-title">Pendientes</p>
+      </div>
+      <div class="sheet-close" onclick="closeDetail()">✕</div>
+    </div>
+
+    <div class="sheet-section">
+      <div class="todo-form">
+        <input type="text" id="todo-input" class="gastos-input" placeholder="Nuevo pendiente..." onkeydown="if(event.key==='Enter'){addTodo();}">
+        <button type="button" class="gastos-submit todo-add-btn" onclick="addTodo()">Agregar</button>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <ul class="todo-list">${listHtml}</ul>
+    </div>
+  `;
+}
+
+window.openPendientes = function(){
+  renderPendientesView();
+  overlay.classList.add('open');
+};
+
+window.addTodo = async function(){
+  const input = document.getElementById('todo-input');
+  const texto = input.value.trim();
+  if(!texto) return;
+  const btn = document.querySelector('.todo-add-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
+  try {
+    await addDoc(todosCol, { texto, hecho: false, creadoEn: serverTimestamp() });
+    renderPendientesView();
+    showToast('✅ Pendiente agregado');
+  } catch(err){
+    if(btn){ btn.disabled = false; btn.textContent = 'Agregar'; }
+    showToast('⚠️ No se pudo agregar, probá de nuevo');
+  }
+};
+
+window.toggleTodo = async function(id, currentDone, el){
+  const row = el ? el.closest('.todo-row') : null;
+  const nowDone = !currentDone;
+  if(el) el.textContent = nowDone ? '✅' : '⬜';
+  if(row) row.classList.toggle('done', nowDone);
+  try {
+    await updateDoc(doc(db, 'todos', id), { hecho: nowDone });
+  } catch(err){
+    if(el) el.textContent = currentDone ? '✅' : '⬜';
+    if(row) row.classList.toggle('done', currentDone);
+    showToast('⚠️ No se pudo actualizar, probá de nuevo');
+  }
+};
+
+window.deleteTodo = async function(id){
+  if(!confirm('¿Borrar este pendiente?')) return;
+  try {
+    await deleteDoc(doc(db, 'todos', id));
+    showToast('🗑️ Pendiente eliminado');
+  } catch(err){
+    showToast('⚠️ No se pudo eliminar, probá de nuevo');
+  }
+};
+
+onSnapshot(query(todosCol, orderBy('creadoEn','asc')), snap => {
+  todosCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  if(sheet.querySelector('.todo-list')) renderPendientesView();
 });
 </script>
 
