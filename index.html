@@ -1446,7 +1446,8 @@ const ONESIGNAL_REST_API_KEY = "os_v2_app_nabpeqyqpjcchezj3eyayshpgwu7gow7gfsunh
 
 async function sendPushNotification(heading, message){
   try{
-    await fetch('https://onesignal.com/api/v1/notifications', {
+    console.log('[push] enviando...', heading, message);
+    const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
@@ -1459,8 +1460,22 @@ async function sendPushNotification(heading, message){
         contents: { en: message }
       })
     });
+    const resData = await res.json().catch(() => null);
+    console.log('[push] respuesta', res.status, resData);
+
+    if(!res.ok || (resData && resData.errors)){
+      const detail = resData && resData.errors ? JSON.stringify(resData.errors) : ('HTTP ' + res.status);
+      console.error('[push] OneSignal devolvió un error', detail);
+      setTimeout(() => showToast('⚠️ No se pudo avisar al grupo: ' + detail), 1600);
+    } else if(!resData || !resData.id || resData.recipients === 0){
+      console.warn('[push] se envió pero nadie lo recibió (0 suscriptos)');
+      setTimeout(() => showToast('⚠️ Nadie tiene los avisos activados todavía (0 destinatarios)'), 1600);
+    } else {
+      console.log('[push] enviado a', resData.recipients, 'personas');
+    }
   } catch(err){
     console.error('[push] no se pudo enviar la notificación', err);
+    setTimeout(() => showToast('⚠️ No se pudo avisar al grupo (sin conexión con OneSignal)'), 1600);
   }
 }
 
@@ -1473,7 +1488,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 16;
+const APP_VERSION = 17;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
