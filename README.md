@@ -600,6 +600,9 @@ h1.title span{color:var(--ember);}
   appearance:none;
 }
 .gastos-input::placeholder{color:var(--text-faint);}
+.gastos-row-inline{display:flex; gap:8px;}
+.gastos-row-inline .gastos-input{flex:1;}
+.gastos-moneda{flex:0 0 84px;}
 .gastos-label{
   font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
   color:var(--text-faint); font-weight:700; margin:4px 0 0;
@@ -1190,50 +1193,77 @@ const db = getFirestore(app);
 const expensesCol = collection(db, "expenses");
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
+const CURRENCIES = ["CLP","USD","UYU"];
+const CURRENCY_SYMBOL = { CLP:"$", USD:"US$", UYU:"$U" };
 let expensesCache = [];
 let splitSelection = new Set(PEOPLE);
 
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
 
-function money(n){
-  return Math.round(n).toLocaleString('es-CL');
+function money(n, currency){
+  const symbol = CURRENCY_SYMBOL[currency] || '$';
+  return `${symbol}${Math.round(n).toLocaleString('es-CL')}`;
 }
 
-function computeBalances(expenses){
-  const balances = {};
-  PEOPLE.forEach(p => balances[p] = 0);
+function computeBalancesByCurrency(expenses){
+  const byCurrency = {};
   expenses.forEach(e => {
+    const currency = e.moneda || 'CLP';
+    if(!byCurrency[currency]){
+      byCurrency[currency] = {};
+      PEOPLE.forEach(p => byCurrency[currency][p] = 0);
+    }
     const monto = Number(e.monto) || 0;
     const entre = (e.entre && e.entre.length) ? e.entre : PEOPLE;
     const share = monto / entre.length;
-    if(balances[e.pagadoPor] !== undefined) balances[e.pagadoPor] += monto;
-    entre.forEach(p => { if(balances[p] !== undefined) balances[p] -= share; });
+    if(byCurrency[currency][e.pagadoPor] !== undefined) byCurrency[currency][e.pagadoPor] += monto;
+    entre.forEach(p => { if(byCurrency[currency][p] !== undefined) byCurrency[currency][p] -= share; });
   });
-  return balances;
+  return byCurrency;
+}
+
+function computeTotalsByCurrency(expenses){
+  const totals = {};
+  expenses.forEach(e => {
+    const currency = e.moneda || 'CLP';
+    totals[currency] = (totals[currency] || 0) + (Number(e.monto) || 0);
+  });
+  return totals;
 }
 
 function renderGastosView(){
-  const balances = computeBalances(expensesCache);
-  const total = expensesCache.reduce((s,e)=>s+(Number(e.monto)||0),0);
+  const balancesByCurrency = computeBalancesByCurrency(expensesCache);
+  const totalsByCurrency = computeTotalsByCurrency(expensesCache);
+  const currenciesUsed = Object.keys(totalsByCurrency);
 
-  const balanceHtml = PEOPLE.map(p=>{
-    const b = Math.round(balances[p]||0);
-    const cls = b>0 ? 'pos' : (b<0 ? 'neg' : 'zero');
-    const label = b>0 ? `le deben $${money(b)}` : (b<0 ? `debe $${money(-b)}` : 'al día');
-    return `<li><span>${p}</span><span class="balance-amt ${cls}">${label}</span></li>`;
-  }).join('');
+  const totalHtml = currenciesUsed.length
+    ? currenciesUsed.map(c => money(totalsByCurrency[c], c)).join(' · ')
+    : money(0, 'CLP');
+
+  const balanceSectionsHtml = currenciesUsed.length ? currenciesUsed.map(currency=>{
+    const balances = balancesByCurrency[currency];
+    const rows = PEOPLE.map(p=>{
+      const b = Math.round(balances[p]||0);
+      const cls = b>0 ? 'pos' : (b<0 ? 'neg' : 'zero');
+      const label = b>0 ? `le deben ${money(b, currency)}` : (b<0 ? `debe ${money(-b, currency)}` : 'al día');
+      return `<li><span>${p}</span><span class="balance-amt ${cls}">${label}</span></li>`;
+    }).join('');
+    return `<p class="gastos-label">${currency}</p><ul class="balance-list">${rows}</ul>`;
+  }).join('') : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
 
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
   const payerOptions = PEOPLE.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}">${c}</option>`).join('');
 
   const listHtml = expensesCache.length ? expensesCache.map(e=>{
     const monto = Number(e.monto) || 0;
+    const currency = e.moneda || 'CLP';
     const entreTxt = (e.entre && e.entre.length === PEOPLE.length) ? 'todos' : (e.entre||[]).join(', ');
     return `<li class="gasto-row">
       <div class="gasto-row-main">
         <p class="gasto-desc">${e.descripcion || '(sin descripción)'}</p>
-        <p class="gasto-meta">Pagó ${e.pagadoPor} · $${money(monto)} · entre ${entreTxt}</p>
+        <p class="gasto-meta">Pagó ${e.pagadoPor} · ${money(monto, currency)} · entre ${entreTxt}</p>
       </div>
       <button type="button" class="gasto-delete" onclick="deleteGasto('${e.id}')">🗑️</button>
     </li>`;
@@ -1245,22 +1275,26 @@ function renderGastosView(){
       <span class="sheet-icon">💰</span>
       <div class="item-body">
         <p class="sheet-title">Gastos del viaje</p>
-        <p class="sheet-meta">Total: $${money(total)}</p>
+        <p class="sheet-meta">Total: ${totalHtml}</p>
       </div>
       <div class="sheet-close" onclick="closeDetail()">✕</div>
     </div>
 
     <div class="sheet-section">
       <p class="sheet-section-title">Balance</p>
-      <ul class="balance-list">${balanceHtml}</ul>
+      ${balanceSectionsHtml}
     </div>
 
     <div class="sheet-section">
       <p class="sheet-section-title">Agregar gasto</p>
       <div class="gastos-form">
-        <input type="text" id="gasto-desc" class="gastos-input" placeholder="Descripción (ej: Supermercado)">
-        <input type="number" id="gasto-monto" class="gastos-input" placeholder="Monto (CLP)" inputmode="numeric">
+        <p class="gastos-label">Pagó</p>
         <select id="gasto-pagador" class="gastos-input">${payerOptions}</select>
+        <input type="text" id="gasto-desc" class="gastos-input" placeholder="Descripción (ej: Supermercado)">
+        <div class="gastos-row-inline">
+          <input type="number" id="gasto-monto" class="gastos-input" placeholder="Monto" inputmode="numeric">
+          <select id="gasto-moneda" class="gastos-input gastos-moneda">${currencyOptions}</select>
+        </div>
         <p class="gastos-label">Se divide entre</p>
         <div class="gastos-chips">${chipsHtml}</div>
         <button type="button" class="gastos-submit" onclick="submitGasto()">Agregar gasto</button>
@@ -1288,6 +1322,7 @@ window.submitGasto = async function(){
   const descEl = document.getElementById('gasto-desc');
   const montoEl = document.getElementById('gasto-monto');
   const pagador = document.getElementById('gasto-pagador').value;
+  const moneda = document.getElementById('gasto-moneda').value;
   const desc = descEl.value.trim();
   const monto = Number(montoEl.value);
   const entre = Array.from(splitSelection);
@@ -1304,6 +1339,7 @@ window.submitGasto = async function(){
   await addDoc(expensesCol, {
     descripcion: desc,
     monto: monto,
+    moneda: moneda,
     pagadoPor: pagador,
     entre: entre,
     creadoEn: serverTimestamp()
