@@ -800,6 +800,7 @@ h1.title span{color:var(--ember);}
 .gasto-row-main{flex:1; min-width:0;}
 .gasto-desc{font-size:13.5px; font-weight:600; color:var(--text); margin:0 0 2px;}
 .gasto-meta{font-size:12px; color:var(--text-dim); margin:0;}
+.gasto-fecha{font-size:11px; color:var(--text-faint); margin:3px 0 0;}
 .gasto-actions{flex:0 0 auto; display:flex; gap:2px;}
 .gasto-edit, .gasto-delete{
   background:none; border:none;
@@ -1535,7 +1536,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 24;
+const APP_VERSION = 25;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1617,6 +1618,22 @@ function toUYU(amount, currency){
 function money(n, currency){
   const symbol = CURRENCY_SYMBOL[currency] || '$';
   return `${symbol}${Math.round(n).toLocaleString('es-CL')}`;
+}
+
+// creadoEn puede llegar como Timestamp de Firestore, como {seconds}, o como
+// null durante el instante en que serverTimestamp() todavía no volvió del
+// servidor. En ese caso no mostramos nada y se completa solo al confirmarse.
+function fmtFecha(ts){
+  if(!ts) return '';
+  let d = null;
+  if(typeof ts.toDate === 'function') d = ts.toDate();
+  else if(ts instanceof Date) d = ts;
+  else if(typeof ts === 'number') d = new Date(ts);
+  else if(typeof ts.seconds === 'number') d = new Date(ts.seconds * 1000);
+  if(!d || isNaN(d.getTime())) return '';
+  const fecha = d.toLocaleDateString('es-UY', { day:'numeric', month:'short' });
+  const hora = d.toLocaleTimeString('es-UY', { hour:'2-digit', minute:'2-digit', hour12:false });
+  return `${fecha} · ${hora}`;
 }
 
 function esc(str){
@@ -1752,11 +1769,14 @@ function renderGastosView(){
         <button type="button" class="gasto-edit" onclick="editGasto('${e.id}')">✏️</button>
         <button type="button" class="gasto-delete" onclick="deleteGasto('${e.id}')">🗑️</button>
       </div>`;
+    const fecha = fmtFecha(e.creadoEn);
+    const fechaHtml = fecha ? `<p class="gasto-fecha">${fecha}</p>` : '';
     if(e.esSaldo){
       return `<li class="gasto-row">
         <div class="gasto-row-main">
           <p class="gasto-desc">💸 ${e.pagadoPor} le pagó a ${(e.entre||[])[0]||''}</p>
           <p class="gasto-meta">${money(monto, currency)}</p>
+          ${fechaHtml}
         </div>
         ${actionsHtml}
       </li>`;
@@ -1766,6 +1786,7 @@ function renderGastosView(){
       <div class="gasto-row-main">
         <p class="gasto-desc">${e.descripcion || '(sin descripción)'}</p>
         <p class="gasto-meta">Pagó ${e.pagadoPor} · ${money(monto, currency)} · entre ${entreTxt}</p>
+        ${fechaHtml}
       </div>
       ${actionsHtml}
     </li>`;
