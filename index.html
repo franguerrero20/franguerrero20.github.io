@@ -644,6 +644,7 @@ h1.title span{color:var(--ember);}
 .balance-summary.pos{color:var(--glacial);}
 .balance-summary.neg{color:var(--ember);}
 .balance-summary.zero{color:var(--text-faint); font-weight:500;}
+.balance-summary-who{color:var(--text-faint); font-weight:500; font-size:0.8em;}
 .settle-list{list-style:none; margin:0; padding:0;}
 .settle-list li{
   display:flex; align-items:center; justify-content:space-between;
@@ -1403,7 +1404,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1626,7 +1627,7 @@ function renderGastosView(){
         <p class="sheet-section-title">${balanceTitle}</p>
         <span class="section-toggle${balanceCollapsed ? '' : ' expanded'}">▾</span>
       </div>
-      ${balanceCollapsed ? `<p class="balance-summary ${summaryCls}">${summaryText}</p>` : balanceSectionsHtml}
+      ${balanceCollapsed ? `<p class="balance-summary ${summaryCls}">${summaryText}${expensesCache.length ? ` <span class="balance-summary-who">· ${miPersona}</span>` : ''}</p>` : balanceSectionsHtml}
     </div>
 
     <div class="sheet-section">
