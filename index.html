@@ -676,6 +676,48 @@ h1.title span{color:var(--ember);}
   cursor:pointer;
 }
 .settle-btn:active{opacity:0.85;}
+.reporte-note{font-size:11.5px; color:var(--text-faint); line-height:1.45; margin:0 0 10px;}
+.reporte-totales{
+  display:flex; justify-content:space-between; gap:10px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:9px 11px;
+  margin:0 0 10px;
+  font-size:12.5px;
+  color:var(--text-dim);
+}
+.reporte-totales b{color:var(--text); font-weight:700;}
+.reporte-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.reporte-card{
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+}
+.reporte-card.mine{border-color:var(--gold);}
+.reporte-head{
+  display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+  padding-bottom:7px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:6px;
+}
+.reporte-name{font-size:13.5px; font-weight:700; color:var(--text);}
+.reporte-yo{font-size:10px; font-weight:700; color:var(--gold); margin-left:5px;}
+.reporte-total{font-size:14px; font-weight:700; color:var(--gold); white-space:nowrap;}
+.reporte-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  font-size:12px; color:var(--text-dim);
+  padding:2.5px 0;
+}
+.reporte-row span:last-child{color:var(--text); font-weight:600; white-space:nowrap;}
+.reporte-row.final{
+  border-top:1px solid var(--line);
+  margin-top:5px; padding-top:6px;
+}
+.reporte-row.final span:last-child.pos{color:var(--glacial);}
+.reporte-row.final span:last-child.neg{color:var(--ember);}
+.reporte-row.final span:last-child.zero{color:var(--text-faint); font-weight:500;}
 .gastos-form{display:flex; flex-direction:column; gap:8px;}
 .gastos-input{
   width:100%;
@@ -1481,7 +1523,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 22;
+const APP_VERSION = 23;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1520,6 +1562,13 @@ let movimientosCollapsed = localStorage.getItem('movimientosCollapsed') === 'tru
 window.toggleMovimientos = function(){
   movimientosCollapsed = !movimientosCollapsed;
   localStorage.setItem('movimientosCollapsed', String(movimientosCollapsed));
+  renderGastosView();
+};
+
+let reportesCollapsed = localStorage.getItem('reportesCollapsed') !== 'false';
+window.toggleReportes = function(){
+  reportesCollapsed = !reportesCollapsed;
+  localStorage.setItem('reportesCollapsed', String(reportesCollapsed));
   renderGastosView();
 };
 
@@ -1591,6 +1640,32 @@ function computeTotalsByCurrency(expenses){
   return totals;
 }
 
+// Desglose por persona, todo convertido a $U. Separa los gastos reales de
+// los pagos entre personas (esSaldo), que no son consumo sino transferencias.
+function computeReports(expenses){
+  const rep = {};
+  PEOPLE.forEach(p => rep[p] = { puso:0, consumo:0, pago:0, recibio:0 });
+  expenses.forEach(e => {
+    const monto = toUYU(Number(e.monto) || 0, e.moneda || 'CLP');
+    const entre = (e.entre && e.entre.length) ? e.entre : PEOPLE;
+    const share = monto / entre.length;
+    if(e.esSaldo){
+      if(rep[e.pagadoPor]) rep[e.pagadoPor].pago += monto;
+      entre.forEach(p => { if(rep[p]) rep[p].recibio += share; });
+    } else {
+      if(rep[e.pagadoPor]) rep[e.pagadoPor].puso += monto;
+      entre.forEach(p => { if(rep[p]) rep[p].consumo += share; });
+    }
+  });
+  // Coincide con computeUnifiedBalances: lo que puso menos lo que le tocó.
+  PEOPLE.forEach(p => {
+    const r = rep[p];
+    r.balance = r.puso + r.pago - r.consumo - r.recibio;
+    r.desembolso = r.puso + r.pago - r.recibio;
+  });
+  return rep;
+}
+
 // Greedy debt simplification: matches the biggest debtor with the biggest
 // creditor each round, so the group ends up with the fewest transfers needed.
 function computeSettlements(balances){
@@ -1656,6 +1731,44 @@ function renderGastosView(){
     : (myBalance>0 ? `Te deben ${money(myBalance,'UYU')}` : (myBalance<0 ? `Debés ${money(-myBalance,'UYU')}` : 'Estás al día'));
   const balanceTitle = balanceCollapsed ? 'Balance' : 'Balance (convertido a $U, tipo de cambio aprox.)';
 
+  const reports = computeReports(expensesCache);
+  const gastoTotalUYU = PEOPLE.reduce((sum, p) => sum + reports[p].consumo, 0);
+  const reporteCards = PEOPLE
+    .slice()
+    .sort((a,b) => reports[b].consumo - reports[a].consumo)
+    .map(p => {
+      const r = reports[p];
+      const bal = Math.round(r.balance);
+      const balCls = bal>0 ? 'pos' : (bal<0 ? 'neg' : 'zero');
+      const balTxt = bal>0 ? `le deben ${money(bal,'UYU')}` : (bal<0 ? `debe ${money(-bal,'UYU')}` : 'al día');
+      const extraRows = [
+        r.pago >= 1 ? `<div class="reporte-row"><span>Pagos que hizo</span><span>${money(r.pago,'UYU')}</span></div>` : '',
+        r.recibio >= 1 ? `<div class="reporte-row"><span>Pagos que recibió</span><span>${money(r.recibio,'UYU')}</span></div>` : ''
+      ].join('');
+      return `<li class="reporte-card${p===miPersona?' mine':''}">
+        <div class="reporte-head">
+          <span class="reporte-name">${p}${p===miPersona?'<span class="reporte-yo">VOS</span>':''}</span>
+          <span class="reporte-total">${money(r.consumo,'UYU')}</span>
+        </div>
+        <div class="reporte-row"><span>Puso de su bolsillo</span><span>${money(r.puso,'UYU')}</span></div>
+        <div class="reporte-row"><span>Le tocó (su parte)</span><span>${money(r.consumo,'UYU')}</span></div>
+        ${extraRows}
+        <div class="reporte-row final"><span>Balance</span><span class="${balCls}">${balTxt}</span></div>
+      </li>`;
+    }).join('');
+  const reportesHtml = expensesCache.length
+    ? `<p class="reporte-note">El número grande es lo que <b>gastó</b> cada uno de verdad: su parte del consumo. "Puso" es la plata que adelantó. Todo convertido a $U, tipo de cambio aprox.</p>
+       <div class="reporte-totales">
+         <span>Total del viaje <b>${money(gastoTotalUYU,'UYU')}</b></span>
+         <span>Promedio <b>${money(gastoTotalUYU/PEOPLE.length,'UYU')}</b></span>
+       </div>
+       <ul class="reporte-list">${reporteCards}</ul>`
+    : `<p class="no-info">Todavía no hay gastos cargados.</p>`;
+  const miReporte = reports[miPersona];
+  const reportesSummary = expensesCache.length
+    ? `Gastaste ${money(miReporte.consumo,'UYU')} <span class="balance-summary-who">· ${miPersona}</span>`
+    : 'Todavía no hay gastos cargados.';
+
   const chipsHtml = PEOPLE.map(p=>`<button type="button" class="gastos-chip${splitSelection.has(p)?' selected':''}" onclick="toggleSplit('${p}', this)">${p}</button>`).join('');
   const currentPagador = editingExpense ? editingExpense.pagadoPor : miPersona;
   const currentMoneda = editingExpense ? (editingExpense.moneda || 'CLP') : 'CLP';
@@ -1707,6 +1820,14 @@ function renderGastosView(){
         <span class="section-toggle${balanceCollapsed ? '' : ' expanded'}">▾</span>
       </div>
       ${balanceCollapsed ? `<p class="balance-summary ${summaryCls}">${summaryText}${expensesCache.length ? ` <span class="balance-summary-who">· ${miPersona}</span>` : ''}</p>` : balanceSectionsHtml}
+    </div>
+
+    <div class="sheet-section">
+      <div class="section-header" onclick="toggleReportes()">
+        <p class="sheet-section-title">Reportes</p>
+        <span class="section-toggle${reportesCollapsed ? '' : ' expanded'}">▾</span>
+      </div>
+      ${reportesCollapsed ? `<p class="balance-summary">${reportesSummary}</p>` : reportesHtml}
     </div>
 
     <div class="sheet-section">
