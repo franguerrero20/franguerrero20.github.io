@@ -614,17 +614,28 @@ h1.title span{color:var(--ember);}
 .balance-amt.pos{color:var(--glacial);}
 .balance-amt.neg{color:var(--ember);}
 .balance-amt.zero{color:var(--text-faint); font-weight:500;}
-.balance-header{
+.section-header{
   display:flex;
   align-items:center;
   justify-content:space-between;
+  gap:8px;
   cursor:pointer;
 }
-.balance-chevron{
-  color:var(--text-faint);
+.section-toggle{
+  flex:0 0 auto;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text-dim);
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
   font-size:13px;
-  padding:2px 4px;
+  transition:transform .15s ease;
 }
+.section-toggle.expanded{transform:rotate(180deg);}
 .balance-summary{
   font-size:14.5px;
   font-weight:700;
@@ -1392,7 +1403,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 9;
+const APP_VERSION = 10;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1417,6 +1428,20 @@ let balanceCollapsed = localStorage.getItem('balanceCollapsed') !== 'false';
 window.toggleBalance = function(){
   balanceCollapsed = !balanceCollapsed;
   localStorage.setItem('balanceCollapsed', String(balanceCollapsed));
+  renderGastosView();
+};
+
+let addFormCollapsed = localStorage.getItem('addFormCollapsed') === 'true';
+window.toggleAddForm = function(){
+  addFormCollapsed = !addFormCollapsed;
+  localStorage.setItem('addFormCollapsed', String(addFormCollapsed));
+  renderGastosView();
+};
+
+let movimientosCollapsed = localStorage.getItem('movimientosCollapsed') === 'true';
+window.toggleMovimientos = function(){
+  movimientosCollapsed = !movimientosCollapsed;
+  localStorage.setItem('movimientosCollapsed', String(movimientosCollapsed));
   renderGastosView();
 };
 
@@ -1597,16 +1622,19 @@ function renderGastosView(){
     </div>
 
     <div class="sheet-section">
-      <div class="balance-header" onclick="toggleBalance()">
+      <div class="section-header" onclick="toggleBalance()">
         <p class="sheet-section-title">${balanceTitle}</p>
-        <span class="balance-chevron">${balanceCollapsed ? '▾' : '▴'}</span>
+        <span class="section-toggle${balanceCollapsed ? '' : ' expanded'}">▾</span>
       </div>
       ${balanceCollapsed ? `<p class="balance-summary ${summaryCls}">${summaryText}</p>` : balanceSectionsHtml}
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-title">${editingId ? 'Editar gasto' : 'Agregar gasto'}</p>
-      <div class="gastos-form">
+      <div class="section-header" onclick="toggleAddForm()">
+        <p class="sheet-section-title">${editingId ? 'Editar gasto' : 'Agregar gasto'}</p>
+        <span class="section-toggle${addFormCollapsed ? '' : ' expanded'}">▾</span>
+      </div>
+      ${addFormCollapsed ? '' : `<div class="gastos-form">
         <p class="gastos-label">Pagó</p>
         <select id="gasto-pagador" class="gastos-input">${payerOptions}</select>
         <input type="text" id="gasto-desc" class="gastos-input" placeholder="Descripción (ej: Supermercado)" value="${descValue}">
@@ -1618,12 +1646,15 @@ function renderGastosView(){
         <div class="gastos-chips">${chipsHtml}</div>
         <button type="button" class="gastos-submit" onclick="submitGasto()">${editingId ? 'Guardar cambios' : 'Agregar gasto'}</button>
         ${editingId ? `<button type="button" class="gastos-cancel" onclick="cancelEdit()">Cancelar edición</button>` : ''}
-      </div>
+      </div>`}
     </div>
 
     <div class="sheet-section">
-      <p class="sheet-section-title">Movimientos</p>
-      <ul class="gastos-list">${listHtml}</ul>
+      <div class="section-header" onclick="toggleMovimientos()">
+        <p class="sheet-section-title">Movimientos</p>
+        <span class="section-toggle${movimientosCollapsed ? '' : ' expanded'}">▾</span>
+      </div>
+      ${movimientosCollapsed ? '' : `<ul class="gastos-list">${listHtml}</ul>`}
     </div>
   `;
 }
@@ -1684,6 +1715,7 @@ window.editGasto = function(id){
   const e = expensesCache.find(x => x.id === id);
   if(!e) return;
   editingId = id;
+  addFormCollapsed = false;
   splitSelection = new Set((e.entre && e.entre.length) ? e.entre : PEOPLE);
   renderGastosView();
   document.getElementById('gasto-pagador').scrollIntoView({block:'center'});
