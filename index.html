@@ -108,12 +108,12 @@ h1.title span{color:var(--ember);}
 }
 .hero-cta-primary:active{opacity:0.85;}
 .hero-cta-primary.cta-gastos{
-  background:var(--gold-soft);
+  background:linear-gradient(var(--gold-soft), var(--gold-soft)), var(--bg-elev);
   border:1px solid rgba(217,164,65,0.4);
   color:var(--gold);
 }
 .hero-cta-primary.cta-pendientes{
-  background:var(--glacial-soft);
+  background:linear-gradient(var(--glacial-soft), var(--glacial-soft)), var(--bg-elev);
   border:1px solid rgba(79,179,166,0.4);
   color:var(--glacial);
 }
@@ -1349,7 +1349,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
