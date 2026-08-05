@@ -1340,6 +1340,11 @@ const expensesCol = collection(db, "expenses");
 const todosCol = collection(db, "todos");
 let todosCache = [];
 
+// Se sube +1 en meta/app.version en Firestore cada vez que se publica un
+// cambio en main. Si la versión guardada es mayor a esta, significa que el
+// HTML que tenemos cargado quedó viejo, así que recargamos solos.
+const APP_VERSION = 1;
+
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
 const CURRENCY_SYMBOL = { CLP:"$", USD:"US$", UYU:"$U" };
@@ -1726,6 +1731,22 @@ window.deleteTodo = async function(id){
 onSnapshot(query(todosCol, orderBy('creadoEn','asc')), snap => {
   todosCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
   if(sheet.querySelector('.todo-list')) renderPendientesView();
+});
+
+onSnapshot(doc(db, 'meta', 'app'), snap => {
+  const data = snap.data();
+  if(!data || typeof data.version !== 'number') return;
+  if(data.version <= APP_VERSION) return;
+
+  // Evita un loop de recargas si por algún motivo la página servida sigue
+  // sin coincidir después de recargar una vez (ej. el deploy de Pages
+  // todavía no propagó el HTML nuevo).
+  const alreadyTried = Number(sessionStorage.getItem('reloadedForVersion') || 0);
+  if(alreadyTried >= data.version) return;
+  sessionStorage.setItem('reloadedForVersion', String(data.version));
+
+  showToast('🔄 Hay una versión nueva, actualizando...');
+  setTimeout(() => hardReload(), 900);
 });
 </script>
 
