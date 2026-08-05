@@ -700,6 +700,29 @@ h1.title span{color:var(--ember);}
   backdrop-filter:blur(6px);
 }
 .reload-btn:active{background:var(--bg-elev-2); transform:scale(0.94);}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translate(-50%, 12px);
+  z-index:200;
+  background:var(--bg-elev-2);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  padding:10px 18px;
+  border-radius:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease;
+  white-space:nowrap;
+}
+.toast.show{
+  opacity:1;
+  transform:translate(-50%, 0);
+}
 </style>
 </head>
 <body>
@@ -732,6 +755,8 @@ h1.title span{color:var(--ember);}
 <div class="overlay" id="overlay">
   <div class="sheet" id="sheet"></div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const DAYS = [
@@ -1232,6 +1257,15 @@ let editingId = null;
 
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
+const toast = document.getElementById('toast');
+let toastTimer = null;
+
+function showToast(msg){
+  clearTimeout(toastTimer);
+  toast.textContent = msg;
+  toast.classList.add('show');
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
 
 // Unidades por 1 USD. Se usa como respaldo si no se puede consultar la
 // cotización en vivo (sin internet, API caída, etc.).
@@ -1450,15 +1484,24 @@ window.submitGasto = async function(){
   }
 
   const data = { descripcion: desc, monto, moneda, pagadoPor: pagador, entre };
+  const wasEditing = !!editingId;
+  const submitBtn = document.querySelector('.gastos-submit');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Guardando...'; }
 
-  if(editingId){
-    await updateDoc(doc(db, 'expenses', editingId), data);
+  try {
+    if(wasEditing){
+      await updateDoc(doc(db, 'expenses', editingId), data);
+    } else {
+      await addDoc(expensesCol, { ...data, creadoEn: serverTimestamp() });
+    }
     editingId = null;
-  } else {
-    await addDoc(expensesCol, { ...data, creadoEn: serverTimestamp() });
+    splitSelection = new Set(PEOPLE);
+    renderGastosView();
+    showToast(wasEditing ? '✅ Cambios guardados' : '✅ Gasto agregado');
+  } catch(err){
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = wasEditing ? 'Guardar cambios' : 'Agregar gasto'; }
+    showToast('⚠️ No se pudo guardar, probá de nuevo');
   }
-
-  splitSelection = new Set(PEOPLE);
 };
 
 window.editGasto = function(id){
@@ -1478,20 +1521,30 @@ window.cancelEdit = function(){
 
 window.saldarDeuda = async function(from, to, amount){
   if(!confirm(`¿Confirmás que ${from} le pagó ${money(amount,'UYU')} a ${to}?`)) return;
-  await addDoc(expensesCol, {
-    descripcion: `Pago: ${from} a ${to}`,
-    monto: amount,
-    moneda: 'UYU',
-    pagadoPor: from,
-    entre: [to],
-    esSaldo: true,
-    creadoEn: serverTimestamp()
-  });
+  try {
+    await addDoc(expensesCol, {
+      descripcion: `Pago: ${from} a ${to}`,
+      monto: amount,
+      moneda: 'UYU',
+      pagadoPor: from,
+      entre: [to],
+      esSaldo: true,
+      creadoEn: serverTimestamp()
+    });
+    showToast('💸 Deuda saldada');
+  } catch(err){
+    showToast('⚠️ No se pudo registrar el pago, probá de nuevo');
+  }
 };
 
 window.deleteGasto = async function(id){
   if(!confirm('¿Borrar este gasto?')) return;
-  await deleteDoc(doc(db, 'expenses', id));
+  try {
+    await deleteDoc(doc(db, 'expenses', id));
+    showToast('🗑️ Gasto eliminado');
+  } catch(err){
+    showToast('⚠️ No se pudo eliminar, probá de nuevo');
+  }
 };
 
 onSnapshot(query(expensesCol, orderBy('creadoEn','desc')), snap => {
