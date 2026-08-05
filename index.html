@@ -1295,6 +1295,7 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
   }
 
   sheet.innerHTML = html;
+  sheet.dataset.view = 'detail';
   overlay.classList.add('open');
 }
 
@@ -1346,11 +1347,13 @@ function openMasMenu(){
       <span class="notes-arrow">›</span>
     </button></li>`).join('')}</ul>
   `;
+  sheet.dataset.view = 'menu';
   overlay.classList.add('open');
 }
 
 function closeDetail(){
   overlay.classList.remove('open');
+  sheet.dataset.view = '';
 }
 overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeDetail(); });
 
@@ -1404,7 +1407,7 @@ let todosCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -1468,7 +1471,7 @@ fetch('https://open.er-api.com/v6/latest/USD')
   .then(data => {
     if(data && data.rates && data.rates.CLP && data.rates.UYU){
       ratesUSD = { CLP: data.rates.CLP, UYU: data.rates.UYU };
-      if(sheet.querySelector('.gastos-list')) renderGastosView();
+      if(sheet.dataset.view === 'gastos') renderGastosView();
     }
   })
   .catch(() => { /* se queda con el tipo de cambio de respaldo */ });
@@ -1658,6 +1661,7 @@ function renderGastosView(){
       ${movimientosCollapsed ? '' : `<ul class="gastos-list">${listHtml}</ul>`}
     </div>
   `;
+  sheet.dataset.view = 'gastos';
 }
 
 window.openGastos = function(){
@@ -1758,7 +1762,7 @@ window.deleteGasto = async function(id){
 
 onSnapshot(query(expensesCol, orderBy('creadoEn','desc')), snap => {
   expensesCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
-  if(sheet.querySelector('.gastos-list')) renderGastosView();
+  if(sheet.dataset.view === 'gastos') renderGastosView();
 });
 
 function renderPendientesView(){
@@ -1792,6 +1796,7 @@ function renderPendientesView(){
       <ul class="todo-list">${listHtml}</ul>
     </div>
   `;
+  sheet.dataset.view = 'pendientes';
 }
 
 window.openPendientes = function(){
@@ -1841,7 +1846,7 @@ window.deleteTodo = async function(id){
 
 onSnapshot(query(todosCol, orderBy('creadoEn','asc')), snap => {
   todosCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
-  if(sheet.querySelector('.todo-list')) renderPendientesView();
+  if(sheet.dataset.view === 'pendientes') renderPendientesView();
 });
 
 onSnapshot(doc(db, 'meta', 'app'), snap => {
