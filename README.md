@@ -622,7 +622,7 @@ h1.title span{color:var(--ember);}
 .gastos-input::placeholder{color:var(--text-faint);}
 .gastos-row-inline{display:flex; gap:8px;}
 .gastos-row-inline .gastos-input{flex:1;}
-.gastos-moneda{flex:0 0 84px;}
+.gastos-moneda{flex:0 0 64px; text-align:center;}
 .gastos-label{
   font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
   color:var(--text-faint); font-weight:700; margin:4px 0 0;
@@ -1251,6 +1251,7 @@ const expensesCol = collection(db, "expenses");
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
 const CURRENCY_SYMBOL = { CLP:"$", USD:"US$", UYU:"$U" };
+const CURRENCY_FLAG = { CLP:"🇨🇱", USD:"🇺🇸", UYU:"🇺🇾" };
 let expensesCache = [];
 let splitSelection = new Set(PEOPLE);
 let editingId = null;
@@ -1383,7 +1384,7 @@ function renderGastosView(){
   const currentPagador = editingExpense ? editingExpense.pagadoPor : PEOPLE[0];
   const currentMoneda = editingExpense ? (editingExpense.moneda || 'CLP') : 'CLP';
   const payerOptions = PEOPLE.map(p=>`<option value="${p}"${p===currentPagador?' selected':''}>${p}</option>`).join('');
-  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}"${c===currentMoneda?' selected':''}>${c}</option>`).join('');
+  const currencyOptions = CURRENCIES.map(c=>`<option value="${c}"${c===currentMoneda?' selected':''}>${CURRENCY_FLAG[c]}</option>`).join('');
   const descValue = editingExpense ? esc(editingExpense.descripcion || '') : '';
   const montoValue = editingExpense ? editingExpense.monto : '';
 
