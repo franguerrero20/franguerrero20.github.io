@@ -1062,7 +1062,7 @@ const DAYS = [
           tips:["2 horas de clases + 2-3 horas libres.","Confirmar que el centro de ski esté operando (depende de nieve/temporada).","Si no tienen equipo propio, se puede alquilar en el centro o en Pucón."],
           outfit:["Ropa térmica e impermeable","Guantes, gorro y gafas de sol/nieve"],
           pack:["Protector solar alto"]},
-        {label:"Grupo 2", icon:"🥾", title:"Sendero Los Lagos",
+        {label:"Grupo 2", icon:"🥾", title:"Sendero Los Lagos + Mirador Laguna El León",
           maps:"Sendero Los Lagos, Parque Nacional Huerquehue, Chile",
           sub:[
             {name:"Laguna Verde", maps:"Laguna Verde, Parque Nacional Huerquehue, Chile"},
@@ -1083,6 +1083,7 @@ const DAYS = [
       {icon:"💦", title:"Tour de los saltos", meta:"Mañana", ember:true,
         sub:[
           {name:"Salto El León", maps:"Salto El León, Pucón, Chile"},
+          {name:"Salto La China", maps:"Salto La China, Pucón, Chile"},
           {name:"Salto Los Mellizos", maps:"Salto Los Mellizos, Pucón, Chile"}
         ],
         tips:["Senderos cerca de agua suelen tener piedras húmedas y resbaladizas."],
@@ -1546,7 +1547,7 @@ let superCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 28;
+const APP_VERSION = 29;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
