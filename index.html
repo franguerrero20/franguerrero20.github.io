@@ -123,6 +123,11 @@ h1.title span{color:var(--ember);}
   border:1px solid rgba(217,164,65,0.4);
   color:var(--gold);
 }
+.hero-cta-primary.cta-super{
+  background:linear-gradient(var(--ember-soft), var(--ember-soft)), var(--bg-elev);
+  border:1px solid rgba(226,87,42,0.4);
+  color:var(--ember);
+}
 .hero-cta-primary.cta-pendientes{
   background:linear-gradient(var(--glacial-soft), var(--glacial-soft)), var(--bg-elev);
   border:1px solid rgba(79,179,166,0.4);
@@ -885,6 +890,7 @@ h1.title span{color:var(--ember);}
   <h1 class="title">Puc<span>ó</span>n 2026</h1>
   <div class="hero-ctas">
     <button class="hero-cta-primary cta-gastos" onclick="openGastos()">💸 Split</button>
+    <button class="hero-cta-primary cta-super" onclick="openSuper()">🛒 Súper</button>
     <button class="hero-cta-primary cta-pendientes" onclick="openPendientes()">📝 Notas</button>
     <button class="hero-cta" onclick="openMasMenu()">⋯ Más</button>
   </div>
@@ -1533,12 +1539,14 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const expensesCol = collection(db, "expenses");
 const todosCol = collection(db, "todos");
+const superCol = collection(db, "super");
 let todosCache = [];
+let superCache = [];
 
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
@@ -2182,6 +2190,108 @@ window.deleteTodo = async function(id){
 onSnapshot(query(todosCol, orderBy('creadoEn','asc')), snap => {
   todosCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
   if(sheet.dataset.view === 'pendientes') renderPendientesView({preserveInput:true});
+});
+
+function renderSuperView(opts){
+  const input = (opts && opts.preserveInput) ? document.getElementById('super-input') : null;
+  const savedItem = input && input.value
+    ? { value: input.value, focused: document.activeElement === input,
+        selStart: input.selectionStart, selEnd: input.selectionEnd }
+    : null;
+  const sorted = [...superCache].sort((a,b) => (a.comprado===b.comprado) ? 0 : (a.comprado ? 1 : -1));
+  const pendientes = superCache.filter(i => !i.comprado).length;
+  const listHtml = sorted.length ? sorted.map(i => `
+    <li class="todo-row${i.comprado ? ' done' : ''}">
+      <span class="todo-check" onclick="toggleSuper('${i.id}', ${!!i.comprado}, this)">${i.comprado ? '✅' : '⬜'}</span>
+      <span class="todo-text">${esc(i.texto || '')}</span>
+      <button type="button" class="todo-delete" onclick="deleteSuper('${i.id}')">🗑️</button>
+    </li>
+  `).join('') : `<p class="no-info">La lista está vacía.</p>`;
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-icon">🛒</span>
+      <div class="item-body">
+        <p class="sheet-title">Súper</p>
+        <p class="sheet-meta">${superCache.length ? `${pendientes} por comprar` : 'Lo que falta comprar'}</p>
+      </div>
+      <div class="sheet-close" onclick="closeDetail()">✕</div>
+    </div>
+
+    <div class="sheet-section">
+      <div class="todo-form">
+        <input type="text" id="super-input" class="gastos-input" placeholder="Ej: carbón, cerveza..." onkeydown="if(event.key==='Enter'){addSuper();}">
+        <button type="button" class="gastos-submit todo-add-btn super-add-btn" onclick="addSuper()">Agregar</button>
+      </div>
+    </div>
+
+    <div class="sheet-section">
+      <ul class="todo-list">${listHtml}</ul>
+    </div>
+  `;
+  sheet.dataset.view = 'super';
+  if(savedItem){
+    const el = document.getElementById('super-input');
+    if(el){
+      el.value = savedItem.value;
+      if(savedItem.focused){
+        el.focus();
+        try { el.setSelectionRange(savedItem.selStart, savedItem.selEnd); } catch(err){ /* ignorar */ }
+      }
+    }
+  }
+}
+
+window.openSuper = function(){
+  renderSuperView();
+  overlay.classList.add('open');
+};
+
+window.addSuper = async function(){
+  const input = document.getElementById('super-input');
+  const texto = input.value.trim();
+  if(!texto) return;
+  const btn = document.querySelector('.super-add-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
+  try {
+    await addDoc(superCol, { texto, comprado: false, creadoEn: serverTimestamp() });
+    sendPushNotification('🛒 Al súper', texto);
+    renderSuperView();
+    showToast('✅ Agregado a la lista');
+  } catch(err){
+    if(btn){ btn.disabled = false; btn.textContent = 'Agregar'; }
+    showToast('⚠️ No se pudo agregar, probá de nuevo');
+  }
+};
+
+window.toggleSuper = async function(id, currentDone, el){
+  const row = el ? el.closest('.todo-row') : null;
+  const nowDone = !currentDone;
+  if(el) el.textContent = nowDone ? '✅' : '⬜';
+  if(row) row.classList.toggle('done', nowDone);
+  try {
+    await updateDoc(doc(db, 'super', id), { comprado: nowDone });
+  } catch(err){
+    if(el) el.textContent = currentDone ? '✅' : '⬜';
+    if(row) row.classList.toggle('done', currentDone);
+    showToast('⚠️ No se pudo actualizar, probá de nuevo');
+  }
+};
+
+window.deleteSuper = async function(id){
+  if(!confirm('¿Sacar esto de la lista?')) return;
+  try {
+    await deleteDoc(doc(db, 'super', id));
+    showToast('🗑️ Sacado de la lista');
+  } catch(err){
+    showToast('⚠️ No se pudo eliminar, probá de nuevo');
+  }
+};
+
+onSnapshot(query(superCol, orderBy('creadoEn','asc')), snap => {
+  superCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  if(sheet.dataset.view === 'super') renderSuperView({preserveInput:true});
 });
 
 onSnapshot(doc(db, 'meta', 'app'), snap => {
