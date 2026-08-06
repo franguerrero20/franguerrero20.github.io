@@ -1068,7 +1068,8 @@ const DAYS = [
             {name:"Laguna Verde", maps:"Laguna Verde, Parque Nacional Huerquehue, Chile"},
             {name:"Laguna Toro", maps:"Laguna Toro, Parque Nacional Huerquehue, Chile"},
             {name:"Laguna Chica", maps:"Laguna Chica, Parque Nacional Huerquehue, Chile"},
-            {name:"Miradores"}
+            {name:"Miradores"},
+            {name:"Mirador Laguna El León", maps:"Mirador Laguna El León, Pucón, Chile"}
           ],
           tips:["Entrada paga en el acceso al parque (CONAF) — llevar efectivo.","Estacionamiento limitado y el parque abre 8:30 hs — conviene llegar apenas abre.","Es una caminata larga (varias horas, terreno con subidas) — calcular tiempo para volver antes de que oscurezca.","Llevar comida y agua, no hay dónde comprar en el sendero."],
           outfit:["Calzado de trekking","Campera cortaviento (cambia el clima en el bosque/altura)","Gorro"],
@@ -1081,7 +1082,6 @@ const DAYS = [
     items:[
       {icon:"💦", title:"Tour de los saltos", meta:"Mañana", ember:true,
         sub:[
-          {name:"Mirador Laguna El León", maps:"Mirador Laguna El León, Pucón, Chile"},
           {name:"Salto El León", maps:"Salto El León, Pucón, Chile"},
           {name:"Salto Los Mellizos", maps:"Salto Los Mellizos, Pucón, Chile"}
         ],
@@ -1546,7 +1546,7 @@ let superCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 27;
+const APP_VERSION = 28;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
