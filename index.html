@@ -631,7 +631,7 @@ h1.title span{color:var(--ember);}
 .apps-desc{font-size:12px; color:var(--text-dim); line-height:1.4; margin:0;}
 .apps-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px; margin-top:2px;}
 .boarding-flight{font-size:11.5px; color:var(--text-faint); line-height:1.45; margin:0 0 10px;}
-.boarding-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.boarding-icon{font-size:20px; flex:0 0 auto;}
 .boarding-row{
   display:flex;
   align-items:center;
@@ -647,7 +647,6 @@ h1.title span{color:var(--ember);}
 .boarding-body{flex:1; min-width:0;}
 .boarding-name{font-size:13.5px; font-weight:600; margin:0 0 2px;}
 .boarding-sub{font-size:12px; color:var(--text-dim); margin:0;}
-.boarding-seat{color:var(--gold); font-weight:700;}
 .boarding-arrow{flex:0 0 auto; color:var(--glacial); font-size:14px;}
 .balance-list{list-style:none; margin:0; padding:0;}
 .balance-list li{
@@ -1176,17 +1175,13 @@ const NOTES = [
   {icon:"🛡️", title:"Seguro Chile", phone:"188800200668"}
 ];
 
-// Vuelo de ida, ordenados por asiento. Los archivos están en /boarding.
-const BOARDING_VUELO = "H2 1811 · Montevideo 19:15 → Santiago 20:55 · viernes 7 de agosto · embarque 18:35 hs";
-const BOARDING = [
-  {nombre:"Bruno Castrillon",   asiento:"20A", grupo:"Grupo 01", file:"boarding/bruno-castrillon.pdf"},
-  {nombre:"Manuel Ramos",       asiento:"36B", grupo:"Grupo 03", file:"boarding/manuel-ramos.pdf"},
-  {nombre:"Emilio Cardozo",     asiento:"36C", grupo:"Grupo 03", file:"boarding/emilio-cardozo.pdf"},
-  {nombre:"Francisco Guerrero", asiento:"37B", grupo:"Grupo 03", file:"boarding/francisco-guerrero.pdf"},
-  {nombre:"Ignacio Rivas",      asiento:"37C", grupo:"Grupo 03", file:"boarding/ignacio-rivas.pdf"},
-  {nombre:"Franco Conde",       asiento:"37D", grupo:"Grupo 03", file:"boarding/franco-conde.pdf"},
-  {nombre:"Renato Carabelli",   asiento:"37E", grupo:"Grupo 03", file:"boarding/renato-carabelli.pdf"}
-];
+// Los boarding pass viven en un Drive con acceso restringido al grupo: traen
+// cédula, código de reserva y el QR, así que no van en este repo, que es
+// público. Acá queda solo el link; Drive es el que controla quién entra.
+const BOARDING = {
+  vuelo: "H2 1811 · Montevideo 19:15 → Santiago 20:55 · viernes 7 de agosto · embarque 18:35 hs",
+  url: "https://drive.google.com/drive/folders/14-bh4OcxF2LrXTam-esK2koMD3Tj6G-6"
+};
 
 const INSTALL_STEPS = [
   "Si el link se abrió en otro navegador (Chrome, etc.), tocá el ícono de compartir o los tres puntos y elegí “Abrir en Safari”.",
@@ -1346,20 +1341,20 @@ function renderSheet(icon, title, meta, note, tips, outfit, pack, maps, sub, lin
   const hasLinks = links && links.length;
   const hasSteps = steps && steps.length;
   const hasApps = apps && apps.length;
-  const hasBoarding = boarding && boarding.length;
+  const hasBoarding = boarding && boarding.url;
 
   if(hasBoarding){
     html += `<div class="sheet-section">
       <p class="sheet-section-title">Boarding pass</p>
-      <p class="boarding-flight">${BOARDING_VUELO}</p>
-      <ul class="boarding-list">${boarding.map(b=>`<li>
-        <a class="boarding-row" href="${b.file}" target="_blank" rel="noopener">
-          <div class="boarding-body">
-            <p class="boarding-name">${b.nombre}</p>
-            <p class="boarding-sub">Asiento <span class="boarding-seat">${b.asiento}</span> · ${b.grupo}</p>
-          </div>
-          <span class="boarding-arrow">↗</span>
-        </a></li>`).join('')}</ul>
+      <p class="boarding-flight">${boarding.vuelo}</p>
+      <a class="boarding-row" href="${boarding.url}" target="_blank" rel="noopener">
+        <span class="boarding-icon">🎫</span>
+        <div class="boarding-body">
+          <p class="boarding-name">Carpeta del grupo</p>
+          <p class="boarding-sub">Cada uno busca el suyo por nombre</p>
+        </div>
+        <span class="boarding-arrow">↗</span>
+      </a>
     </div>`;
   }
 
@@ -1594,7 +1589,7 @@ let superCache = [];
 // Se sube +1 en meta/app.version en Firestore cada vez que se publica un
 // cambio en main. Si la versión guardada es mayor a esta, significa que el
 // HTML que tenemos cargado quedó viejo, así que recargamos solos.
-const APP_VERSION = 31;
+const APP_VERSION = 32;
 
 const PEOPLE = ["Bibi","Osi","Conde","Rivas","Emilio","Renatito","Aie"];
 const CURRENCIES = ["CLP","USD","UYU"];
